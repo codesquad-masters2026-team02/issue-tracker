@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 회의록 / 논의
+    url: https://www.notion.so/issue-35692fa56810805ab299e22611ba6bc2
+    about: 이슈가 아닌 일반 논의나 회의 기록은 Notion을 이용해주세요
+  - name: 📋 Project Board
+    url: https://github.com/orgs/codesquad-masters2026-team02/projects/1
+    about: 전체 작업 현황은 Project Board에서 확인할 수 있습니다
