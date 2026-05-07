@@ -5,9 +5,6 @@ node_modules/
 dist/
 build/
 .vite/
-.turbo/
-.cache/
-.parcel-cache/
 *.tsbuildinfo
 
 # Logs

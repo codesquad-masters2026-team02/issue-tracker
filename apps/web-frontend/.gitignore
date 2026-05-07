@@ -4,7 +4,6 @@ node_modules/
 # Build
 dist/
 build/
-.vite/
 
 # TypeScript
 *.tsbuildinfo
@@ -12,27 +11,5 @@ build/
 # Testing
 coverage/
 
-# Environment
-.env
-.env.*
-!.env.example
-*.local
-
-# Logs
+# Misc
 *.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# Design handoff
-design-handoff/fonts/
-design-handoff/screens/
