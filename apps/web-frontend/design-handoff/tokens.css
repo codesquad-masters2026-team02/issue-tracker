@@ -1,0 +1,361 @@
+/* =====================================================
+   Issue Tracker - Design Tokens
+   Font: Pretendard
+   Based on Foundation & Screen Design
+   ===================================================== */
+
+/* =====================================================
+   @font-face - Pretendard
+   ===================================================== */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+/* =====================================================
+   COLOR TOKENS
+   ===================================================== */
+:root {
+
+  /* --- Primary (Blue) --- */
+  --color-primary-50:  #EBF2FF;
+  --color-primary-100: #C2D9FF;
+  --color-primary-200: #99C0FF;
+  --color-primary-300: #5599FF;
+  --color-primary-400: #2277FF;
+  --color-primary-500: #007AFF;   /* 메인 파란색 (버튼, 링크, 뱃지 등) */
+  --color-primary-600: #0062CC;
+  --color-primary-700: #004A99;
+  --color-primary-800: #003166;
+  --color-primary-900: #001933;
+
+  /* --- Gray Scale --- */
+  --color-gray-50:  #F7F7FC;   /* 페이지 배경 */
+  --color-gray-100: #EFF0F6;   /* 인풋 배경, hover 배경 */
+  --color-gray-200: #D9DBE9;   /* 보더 기본 */
+  --color-gray-300: #C7C9D9;   /* 보더 강조 */
+  --color-gray-400: #A0A3BD;   /* placeholder 텍스트 */
+  --color-gray-500: #6E7191;   /* 보조 텍스트 */
+  --color-gray-600: #4E4B66;   /* 기본 텍스트 */
+  --color-gray-700: #2D2B43;   /* 강조 텍스트 */
+  --color-gray-800: #14142B;   /* 헤딩 텍스트 */
+  --color-gray-900: #0A0A18;
+
+  /* --- Semantic Colors --- */
+  --color-error:    #FF3B30;   /* 삭제, 에러, bug 레이블 */
+  --color-success:  #34C759;   /* 성공, 열린 이슈 */
+  --color-warning:  #FF9500;   /* 경고 */
+  --color-info:     #007AFF;   /* 정보 (= primary) */
+
+  /* --- Label Colors --- */
+  --color-label-documentation-bg:   #0025E6;   /* documentation 레이블 배경 */
+  --color-label-documentation-text: #FFFFFF;
+  --color-label-bug-bg:             #FF3B30;   /* bug 레이블 배경 */
+  --color-label-bug-text:           #FFFFFF;
+  --color-label-default-bg:         #EFF0F6;   /* 기본 레이블 배경 */
+  --color-label-default-text:       #4E4B66;
+
+  /* =====================================================
+     LIGHT MODE SEMANTIC TOKENS
+     ===================================================== */
+
+  /* Background */
+  --color-bg-page:         var(--color-gray-50);    /* #F7F7FC - 전체 배경 */
+  --color-bg-surface:      #FFFFFF;                  /* 카드, 패널 배경 */
+  --color-bg-input:        var(--color-gray-100);   /* 인풋 기본 배경 */
+  --color-bg-input-focus:  #FFFFFF;
+  --color-bg-hover:        var(--color-gray-100);   /* 호버 배경 */
+  --color-bg-overlay:      rgba(0, 0, 0, 0.4);      /* 모달 오버레이 */
+
+  /* Border */
+  --color-border-default:  var(--color-gray-200);   /* #D9DBE9 */
+  --color-border-focus:    var(--color-primary-500);
+  --color-border-error:    var(--color-error);
+
+  /* Text */
+  --color-text-primary:    var(--color-gray-800);   /* #14142B */
+  --color-text-secondary:  var(--color-gray-600);   /* #4E4B66 */
+  --color-text-tertiary:   var(--color-gray-500);   /* #6E7191 */
+  --color-text-placeholder:var(--color-gray-400);   /* #A0A3BD */
+  --color-text-disabled:   var(--color-gray-300);
+  --color-text-link:       var(--color-primary-500);
+  --color-text-error:      var(--color-error);
+  --color-text-on-primary: #FFFFFF;
+
+  /* Interactive */
+  --color-interactive-primary:         var(--color-primary-500);
+  --color-interactive-primary-hover:   var(--color-primary-600);
+  --color-interactive-primary-disabled:#A8CAFF;     /* 연한 파란색 (disabled 버튼) */
+  --color-interactive-destructive:     var(--color-error);
+
+  /* Issue Status */
+  --color-issue-open:   var(--color-primary-500);  /* 열린 이슈 */
+  --color-issue-closed: var(--color-gray-400);      /* 닫힌 이슈 */
+
+  /* Milestone Progress */
+  --color-milestone-progress: var(--color-primary-500);
+  --color-milestone-track:    var(--color-gray-200);
+}
+
+/* =====================================================
+   DARK MODE TOKENS
+   ===================================================== */
+[data-theme='dark'] {
+  /* Background */
+  --color-bg-page:         #14142B;
+  --color-bg-surface:      #1E1E3A;
+  --color-bg-input:        #2D2B43;
+  --color-bg-input-focus:  #2D2B43;
+  --color-bg-hover:        #2D2B43;
+
+  /* Border */
+  --color-border-default:  #4E4B66;
+  --color-border-focus:    var(--color-primary-400);
+
+  /* Text */
+  --color-text-primary:    #FFFFFF;
+  --color-text-secondary:  #D9DBE9;
+  --color-text-tertiary:   #A0A3BD;
+  --color-text-placeholder:#6E7191;
+  --color-text-disabled:   #4E4B66;
+  --color-text-link:       var(--color-primary-400);
+
+  /* Interactive */
+  --color-interactive-primary:         var(--color-primary-400);
+  --color-interactive-primary-hover:   var(--color-primary-300);
+  --color-interactive-primary-disabled:#2D2B43;
+}
+
+/* =====================================================
+   TYPOGRAPHY TOKENS
+   ===================================================== */
+:root {
+  --font-family-base: 'Pretendard', -apple-system, BlinkMacSystemFont,
+                      'Segoe UI', sans-serif;
+
+  /* Font Size Scale */
+  --font-size-xs:   11px;
+  --font-size-sm:   12px;
+  --font-size-md:   14px;   /* 기본 본문 */
+  --font-size-lg:   16px;
+  --font-size-xl:   18px;
+  --font-size-2xl:  20px;
+  --font-size-3xl:  24px;
+  --font-size-4xl:  32px;   /* 로고 / 헤딩 */
+
+  /* Font Weight */
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+  --font-weight-bold:    700;
+
+  /* Line Height */
+  --line-height-tight:  1.2;
+  --line-height-normal: 1.5;
+  --line-height-loose:  1.75;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+
+  /* ---- Semantic Typography ---- */
+
+  /* 로고 타이틀 - "Issue Tracker" */
+  --text-logo-size:   28px;
+  --text-logo-weight: var(--font-weight-bold);
+  --text-logo-style:  italic;
+
+  /* 페이지 제목 - "새로운 이슈 작성", "FE 이슈트래커..." */
+  --text-heading-size:   var(--font-size-3xl);
+  --text-heading-weight: var(--font-weight-bold);
+
+  /* 이슈 제목 - 목록에서 이슈 타이틀 */
+  --text-issue-title-size:   var(--font-size-lg);
+  --text-issue-title-weight: var(--font-weight-bold);
+
+  /* 본문 기본 */
+  --text-body-size:   var(--font-size-md);
+  --text-body-weight: var(--font-weight-regular);
+
+  /* 보조 텍스트 - 타임스탬프, 번호 등 */
+  --text-caption-size:   var(--font-size-sm);
+  --text-caption-weight: var(--font-weight-regular);
+
+  /* 버튼 텍스트 */
+  --text-button-size:   var(--font-size-md);
+  --text-button-weight: var(--font-weight-medium);
+
+  /* 인풋 레이블 */
+  --text-label-size:   var(--font-size-sm);
+  --text-label-weight: var(--font-weight-medium);
+}
+
+/* =====================================================
+   SPACING TOKENS
+   (4px 기반 8포인트 그리드)
+   ===================================================== */
+:root {
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Layout specific */
+  --layout-page-padding:     var(--space-6);      /* 페이지 좌우 패딩 */
+  --layout-content-max-width: 1280px;             /* 컨텐츠 최대 너비 */
+  --layout-header-height:     64px;               /* 헤더 높이 */
+  --layout-sidebar-width:     280px;              /* 이슈 상세 우측 패널 */
+}
+
+/* =====================================================
+   BORDER RADIUS TOKENS
+   ===================================================== */
+:root {
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;    /* 인풋, 카드 기본 */
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
+  --radius-full: 9999px; /* 배지, 레이블, 둥근 버튼 */
+
+  /* Component specific */
+  --radius-button:  var(--radius-full);  /* 버튼: 완전히 둥근 */
+  --radius-input:   var(--radius-md);    /* 인풋: 8px */
+  --radius-card:    var(--radius-md);    /* 카드/패널: 8px */
+  --radius-badge:   var(--radius-full);  /* 레이블 뱃지: pill */
+  --radius-dropdown:var(--radius-md);    /* 드롭다운: 8px */
+  --radius-checkbox:var(--radius-xs);    /* 체크박스: 4px */
+}
+
+/* =====================================================
+   SHADOW TOKENS
+   ===================================================== */
+:root {
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.1),
+                0 4px 6px  rgba(0, 0, 0, 0.05);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.12); /* 드롭다운 패널 */
+}
+
+/* =====================================================
+   OPACITY TOKENS
+   ===================================================== */
+:root {
+  --opacity-100: 1;
+  --opacity-80:  0.8;
+  --opacity-56:  0.56;   /* disabled 상태 */
+  --opacity-40:  0.4;
+  --opacity-16:  0.16;
+  --opacity-0:   0;
+
+  /* disabled 버튼 opacity */
+  --opacity-disabled: var(--opacity-56);
+}
+
+/* =====================================================
+   TRANSITION TOKENS
+   ===================================================== */
+:root {
+  --transition-fast:   100ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   300ms ease;
+}
+
+/* =====================================================
+   Z-INDEX TOKENS
+   ===================================================== */
+:root {
+  --z-index-base:     0;
+  --z-index-dropdown: 100;
+  --z-index-sticky:   200;
+  --z-index-overlay:  300;
+  --z-index-modal:    400;
+  --z-index-toast:    500;
+}
+
+/* =====================================================
+   COMPONENT SIZE TOKENS
+   (화면 디자인에서 추출)
+   ===================================================== */
+:root {
+  /* Button */
+  --button-height-sm:  32px;
+  --button-height-md:  40px;   /* 기본 버튼 높이 */
+  --button-height-lg:  48px;
+  --button-padding-x:  var(--space-4);
+
+  /* Input */
+  --input-height:      40px;
+  --input-padding-x:   var(--space-4);
+  --input-padding-y:   var(--space-2);
+
+  /* Textarea */
+  --textarea-min-height: 200px;
+  --textarea-padding:    var(--space-4);
+
+  /* Badge / Label */
+  --badge-height:       24px;
+  --badge-padding-x:    var(--space-2);
+  --badge-font-size:    var(--font-size-sm);
+
+  /* Checkbox */
+  --checkbox-size:      16px;
+
+  /* Avatar */
+  --avatar-size-sm:     24px;
+  --avatar-size-md:     32px;
+
+  /* Dropdown panel */
+  --dropdown-min-width: 200px;
+
+  /* Progress bar */
+  --progress-height:    4px;
+  --progress-radius:    var(--radius-full);
+
+  /* Issue list row */
+  --issue-row-padding-y: var(--space-4);
+  --issue-row-padding-x: var(--space-6);
+}
+
+/* =====================================================
+   BASE RESET & GLOBAL STYLES
+   ===================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font-family-base);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
