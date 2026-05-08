@@ -2,7 +2,7 @@ services:
   spring-api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
     image: issue-tracker-spring-api:latest
     container_name: issue-tracker-spring-api
     ports:
