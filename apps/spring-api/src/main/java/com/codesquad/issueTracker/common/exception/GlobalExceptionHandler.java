@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        ErrorCode errorCode = ErrorCode.DEFAULT_ERROR;
+    public ResponseEntity<ApiResponse<Void>> handleException(BusinessException e) {
+        ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));

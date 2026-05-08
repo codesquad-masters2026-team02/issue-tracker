@@ -1,5 +1,7 @@
 package com.codesquad.issueTracker.issue;
 
+import com.codesquad.issueTracker.common.exception.BusinessException;
+import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,11 @@ public class IssueService {
     }
 
     private IssueResponse mapIssueToDto(Issue issue){
+        return IssueResponse.from(issue);
+    }
+
+    public IssueResponse findIssueById(Long id){
+        Issue issue = issueRepository.findById(id).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
         return IssueResponse.from(issue);
     }
 }

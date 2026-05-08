@@ -6,11 +6,7 @@ import com.codesquad.issueTracker.issue.dto.IssueResponse;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.ArrayList;
@@ -42,5 +38,10 @@ public class IssueController {
     public ResponseEntity<ApiResponse<List<IssueResponse>>> mainPage(){
         List<IssueResponse> responses = issueService.getMainPageIssues();
         return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<IssueResponse>> issueDetail(@PathVariable Long id){
+        return ResponseEntity.ok(ApiResponse.ok(issueService.findIssueById(id)));
     }
 }
