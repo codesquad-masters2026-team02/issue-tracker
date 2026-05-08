@@ -2,9 +2,11 @@ name: Deploy to Vercel
 
 on:
   push:
+    branches: [develop]
     paths:
       - 'apps/web-frontend/**'
       - 'packages/api-spec/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
