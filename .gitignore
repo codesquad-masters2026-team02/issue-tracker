@@ -9,6 +9,9 @@ build/
 .cache/
 .parcel-cache/
 *.tsbuildinfo
+*.js.map
+vite.config.js
+vite.config.d.ts
 
 # Generated API client (orval)
 packages/api-spec/src/generated/
