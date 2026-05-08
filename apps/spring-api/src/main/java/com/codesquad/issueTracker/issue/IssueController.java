@@ -22,12 +22,6 @@ import java.util.List;
 public class IssueController {
     private final IssueService issueService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<Void>> test() {
-        return ResponseEntity.ok(ApiResponse.noContent());
-    }
-
-
 
     @PostMapping
     public ResponseEntity<ApiResponse<IssueResponse>> createIssue(@RequestBody IssueRequest request) {
@@ -44,8 +38,7 @@ public class IssueController {
                 .body(ApiResponse.ok(created));
     }
 
-
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<ApiResponse<List<IssueResponse>>> mainPage(){
         List<IssueResponse> responses = issueService.getMainPageIssues();
         return ResponseEntity.ok(ApiResponse.ok(responses));

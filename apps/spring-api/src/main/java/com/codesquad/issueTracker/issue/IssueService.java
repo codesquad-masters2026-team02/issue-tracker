@@ -27,6 +27,6 @@ public class IssueService {
     }
 
     private IssueResponse mapIssueToDto(Issue issue){
-        return IssueResponse.builder().title(issue.getTitle()).status(issue.getStatus()).issueNumber(issue.getIssueNumber()).createdByUserId(issue.getAuthorId().getId()).createdAt(issue.getCreatedAt()).build();
+        return IssueResponse.from(issue);
     }
 }
