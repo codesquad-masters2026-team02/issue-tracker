@@ -1,0 +1,147 @@
+.issue-list { display: flex; flex-direction: column; gap: var(--space-6); }
+
+/* topbar */
+.issue-list__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* 필터 + 검색 결합 pill */
+.search-pill {
+  flex: 1;
+  max-width: 560px;
+  display: flex;
+  align-items: stretch;
+  height: var(--input-height);
+  background-color: var(--color-bg-input);
+  border-radius: var(--radius-full);
+  padding: 0 var(--space-2);
+}
+.search-pill__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.search-pill__divider {
+  width: 1px;
+  background-color: var(--color-border-default);
+  margin: var(--space-2) 0;
+}
+.search-pill__input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+}
+.search-pill__input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: var(--color-text-primary);
+}
+.search-pill__input input::placeholder { color: var(--color-text-placeholder); }
+.search-pill__input img { opacity: 0.6; }
+
+/* 우측 액션 */
+.issue-list__actions { display: flex; align-items: center; gap: var(--space-3); }
+
+/* 레이블 + 마일스톤 결합 chip group */
+.chip-group {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--button-height-md);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  overflow: hidden;
+}
+.chip-group__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: var(--color-text-primary);
+  font-size: var(--text-button-size);
+  font-weight: var(--text-button-weight);
+}
+.chip-group__item:hover { background-color: var(--color-bg-hover); }
+.chip-group__divider {
+  width: 1px;
+  background-color: var(--color-border-default);
+}
+
+/* table */
+.issue-table {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.issue-table__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background-color: var(--color-gray-100);
+  border-bottom: 1px solid var(--color-border-default);
+}
+.issue-table__select-all { display: flex; align-items: center; }
+.issue-table__tabs { display: flex; gap: var(--space-6); }
+.issue-table__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+.issue-table__tab.is-active { color: var(--color-text-primary); font-weight: var(--font-weight-bold); }
+.issue-table__filters { margin-left: auto; display: flex; gap: var(--space-6); }
+.issue-table__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.issue-table__body { list-style: none; }
+.issue-table__empty {
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+.issue-table__empty--error { color: var(--color-text-error); }
+
+/* row */
+.issue-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--issue-row-padding-y) var(--issue-row-padding-x);
+  border-bottom: 1px solid var(--color-border-default);
+}
+.issue-row:last-child { border-bottom: none; }
+.issue-row__status { flex: 0 0 auto; }
+.issue-row__main { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+.issue-row__title {
+  font-size: var(--text-issue-title-size);
+  font-weight: var(--text-issue-title-weight);
+  color: var(--color-text-link);
+}
+.issue-row__title:hover { text-decoration: none; }
+.issue-row__meta {
+  display: flex;
+  gap: var(--space-4);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-caption-size);
+}
+.issue-row__assignee { border-radius: var(--radius-full); }

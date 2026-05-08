@@ -1,0 +1,29 @@
+.app-header {
+  width: 100%;
+  height: var(--layout-header-height);
+  background-color: var(--color-bg-page);
+}
+
+.app-header__inner {
+  max-width: var(--layout-content-max-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--layout-page-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header__logo {
+  font-size: var(--text-logo-size);
+  font-weight: var(--text-logo-weight);
+  font-style: var(--text-logo-style);
+  color: var(--color-text-primary);
+}
+.app-header__logo:hover { text-decoration: none; }
+
+.app-header__avatar {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  border-radius: var(--radius-full);
+}

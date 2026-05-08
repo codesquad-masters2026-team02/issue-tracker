@@ -10,6 +10,9 @@ build/
 .parcel-cache/
 *.tsbuildinfo
 
+# Generated API client (orval)
+packages/api-spec/src/generated/
+
 # Logs
 *.log
 npm-debug.log*
