@@ -6,12 +6,11 @@ import com.codesquad.issueTracker.issue.dto.IssueResponse;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/issues")
@@ -19,10 +18,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class IssueController {
     private final IssueService issueService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<Void>> test() {
-        return ResponseEntity.ok(ApiResponse.noContent());
-    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<IssueResponse>> createIssue(@RequestBody IssueRequest request) {
@@ -39,4 +34,15 @@ public class IssueController {
                 .body(ApiResponse.ok(created));
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<IssueResponse>>> mainPage(){
+        List<IssueResponse> responses = issueService.getMainPageIssues();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<IssueResponse>> issueDetail(@PathVariable Long id){
+        return ResponseEntity.ok(ApiResponse.ok(issueService.findIssueById(id)));
+        //TODO: 코멘트 관련 로직도 추가
+    }
 }

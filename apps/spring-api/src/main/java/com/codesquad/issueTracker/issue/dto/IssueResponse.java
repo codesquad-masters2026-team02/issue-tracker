@@ -11,6 +11,6 @@ public record IssueResponse(
         LocalDateTime createdAt
 ) {
     public static IssueResponse from(Issue issue) {
-        return new IssueResponse(issue.getIssueNumber(), issue.getTitle(), issue.getStatus(), issue.getCreateAt());
+        return new IssueResponse(issue.getIssueNumber(), issue.getTitle(), issue.getStatus(), issue.getCreatedAt());
     }
 }
