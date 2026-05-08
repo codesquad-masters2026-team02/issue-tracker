@@ -5,26 +5,34 @@ import com.codesquad.issueTracker.user.User;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(name = "issues")
+@Table(name = "ISSUES")
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class Issue {
     @Id
-    @Column("issue_number")
+    @Column("ISSUE_NUMBER")
     private Long issueNumber;
-    @Column("author_id")
-    private AggregateReference<User, Long> authorId;
+//    @Column("author_id")
+//    private AggregateReference<User, Long> authorId;
+    @Column("AUTHOR_ID")
+    private Long authorId;
+    @Column("TITLE")
     private String title;
+    @Column("STATUS")
     private IssueStatus status;
     @CreatedDate
-    @Column("created_at")
+    @Column("CREATED_AT")
     private LocalDateTime createdAt;
-    @Column("milestone_id")
-    private AggregateReference<Milestone, Long> milestoneId;
+//    @Column("milestone_id")
+//    private AggregateReference<Milestone, Long> milestoneId;
+    @Column("MILESTONE_ID")
+    private Long milestoneId;
 }
