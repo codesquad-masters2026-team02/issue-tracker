@@ -5,6 +5,10 @@ import com.codesquad.issueTracker.issue.dto.IssueResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 @Service
 @RequiredArgsConstructor
 public class IssueService {
@@ -16,4 +20,13 @@ public class IssueService {
         return IssueResponse.from(issue);
     }
 
+
+    public List<IssueResponse> getMainPageIssues(){
+        List<Issue> issues = issueRepository.findAll();
+        return issues.stream().map(this::mapIssueToDto).collect(Collectors.toList());
+    }
+
+    private IssueResponse mapIssueToDto(Issue issue){
+        return IssueResponse.builder().title(issue.getTitle()).status(issue.getStatus()).issueNumber(issue.getIssueNumber()).createdByUserId(issue.getAuthorId().getId()).createdAt(issue.getCreatedAt()).build();
+    }
 }

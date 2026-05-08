@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/issues")
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ public class IssueController {
     public ResponseEntity<ApiResponse<Void>> test() {
         return ResponseEntity.ok(ApiResponse.noContent());
     }
+
+
 
     @PostMapping
     public ResponseEntity<ApiResponse<IssueResponse>> createIssue(@RequestBody IssueRequest request) {
@@ -39,4 +44,10 @@ public class IssueController {
                 .body(ApiResponse.ok(created));
     }
 
+
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse<List<IssueResponse>>> mainPage(){
+        List<IssueResponse> responses = issueService.getMainPageIssues();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
 }
