@@ -1,0 +1,51 @@
+name: Deploy Spring API to LA Server
+
+# 1. THE TRIGGER
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'apps/spring-api/**' # Only run if backend code changes!
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 2. CHECKOUT CODE
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      # 3. BUILD THE IMAGE
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest -f Dockerfile.api .
+
+      # 4. PUSH TO DOCKER HUB
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
+
+      # 5. DEPLOY TO REMOTE SERVER (LA)
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
+            docker stop api || true
+            docker rm api || true
+            # Run the new container, passing in your production DB secrets
+            docker run -d --name api -p 80:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_URL=${{ secrets.PROD_DB_URL }} \
+              -e DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
+              ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest

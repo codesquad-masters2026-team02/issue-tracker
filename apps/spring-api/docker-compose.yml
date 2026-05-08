@@ -1,0 +1,12 @@
+services:
+  spring-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: issue-tracker-spring-api:latest
+    container_name: issue-tracker-spring-api
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
