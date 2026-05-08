@@ -1,0 +1,19 @@
+/* design-handoff/tokens.css 를 그대로 import해서 전역 토큰을 사용한다. */
+@import url('../../design-handoff/tokens.css');
+
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+}
+
+a {
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: var(--font-family-base);
+}

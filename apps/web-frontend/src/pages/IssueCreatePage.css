@@ -1,0 +1,37 @@
+.issue-create { display: flex; flex-direction: column; gap: var(--space-4); }
+.issue-create__heading {
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  color: var(--color-text-primary);
+}
+.issue-create__rule {
+  border: none;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.issue-create__body {
+  display: grid;
+  grid-template-columns: 1fr var(--layout-sidebar-width);
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* main */
+.issue-create__main { display: flex; gap: var(--space-4); }
+.issue-create__avatar { border-radius: var(--radius-full); flex: 0 0 auto; }
+.issue-create__form { flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* footer: 둘 다 우측 정렬 */
+.issue-create__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.issue-create__error {
+  color: var(--color-text-error);
+  font-size: var(--text-caption-size);
+}

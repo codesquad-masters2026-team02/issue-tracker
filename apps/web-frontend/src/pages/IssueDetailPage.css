@@ -1,0 +1,129 @@
+.issue-detail { display: flex; flex-direction: column; gap: var(--space-4); }
+.issue-detail__status { padding: var(--space-12); text-align: center; color: var(--color-text-tertiary); }
+.issue-detail__status--error { color: var(--color-text-error); }
+
+.issue-detail__header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-4);
+}
+.issue-detail__title {
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  color: var(--color-text-primary);
+  display: flex; align-items: baseline; gap: var(--space-3);
+}
+.issue-detail__number {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-regular);
+}
+.issue-detail__header-actions { display: flex; gap: var(--space-2); }
+
+/* 상태바 */
+.issue-detail__status-bar {
+  display: flex; align-items: center; gap: var(--space-4);
+}
+.issue-detail__status-text { color: var(--color-text-tertiary); font-size: var(--text-body-size); }
+.issue-detail__rule {
+  border: none;
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* 상태 뱃지 */
+.status-badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption-size);
+  font-weight: var(--font-weight-medium);
+}
+.status-badge--open {
+  background-color: var(--color-issue-open);
+  color: var(--color-text-on-primary);
+}
+.status-badge--closed {
+  background-color: var(--color-issue-closed);
+  color: var(--color-text-on-primary);
+}
+.status-badge img { filter: brightness(0) invert(1); }
+
+/* 본문 + 사이드바 */
+.issue-detail__body {
+  display: grid;
+  grid-template-columns: 1fr var(--layout-sidebar-width);
+  gap: var(--space-8);
+  margin-top: var(--space-2);
+}
+
+.issue-detail__content { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* comment card */
+.comment-card {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.comment-card__head {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+}
+.comment-card__avatar { border-radius: var(--radius-full); }
+.comment-card__author { font-weight: var(--font-weight-medium); color: var(--color-text-primary); }
+.comment-card__time { color: var(--color-text-tertiary); font-size: var(--text-caption-size); }
+.comment-card__actions {
+  margin-left: auto;
+  display: flex; align-items: center; gap: var(--space-3);
+}
+.comment-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption-size);
+}
+.comment-card__action[disabled] { opacity: var(--opacity-disabled); cursor: not-allowed; }
+
+.author-tag {
+  display: inline-flex; align-items: center;
+  height: var(--badge-height);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-secondary);
+}
+
+.comment-card__body { padding: var(--space-4); }
+.comment-card__placeholder { color: var(--color-text-tertiary); font-size: var(--text-caption-size); }
+
+/* 새 코멘트 푸터 */
+.new-comment__footer { display: flex; justify-content: flex-end; }
+
+/* 사이드바 영역 */
+.issue-detail__aside { display: flex; flex-direction: column; gap: var(--space-4); }
+.issue-detail__delete {
+  align-self: flex-end;
+  padding: 0;
+  height: auto;
+}
+
+/* progress */
+.progress { display: flex; align-items: center; gap: var(--space-3); }
+.progress__track {
+  flex: 1;
+  height: var(--progress-height);
+  background-color: var(--color-milestone-track);
+  border-radius: var(--progress-radius);
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  background-color: var(--color-milestone-progress);
+  border-radius: var(--progress-radius);
+}
+.progress__label {
+  font-size: var(--text-caption-size);
+  color: var(--color-text-tertiary);
+}
