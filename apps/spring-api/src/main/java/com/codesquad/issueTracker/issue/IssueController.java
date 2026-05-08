@@ -43,5 +43,6 @@ public class IssueController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<IssueResponse>> issueDetail(@PathVariable Long id){
         return ResponseEntity.ok(ApiResponse.ok(issueService.findIssueById(id)));
+        //TODO: 코멘트 관련 로직도 추가
     }
 }
