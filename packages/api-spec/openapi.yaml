@@ -1,0 +1,108 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /api/issues:
+    get:
+      tags:
+      - issue-controller
+      operationId: mainPage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseListIssueResponse"
+    post:
+      tags:
+      - issue-controller
+      operationId: createIssue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseIssueResponse"
+  /api/issues/{id}:
+    get:
+      tags:
+      - issue-controller
+      operationId: issueDetail
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseIssueResponse"
+components:
+  schemas:
+    IssueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+    ApiResponseIssueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/IssueResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    ErrorDto:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    IssueResponse:
+      type: object
+      properties:
+        issueNumber:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+        createdAt:
+          type: string
+          format: date-time
+    ApiResponseListIssueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"

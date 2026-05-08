@@ -2,7 +2,7 @@ import { defineConfig } from 'orval';
 
 export default defineConfig({
   api: {
-    input: 'http://localhost:8080/v3/api-docs',
+    input: './openapi.yaml',
     output: {
       target: './src/generated/index.ts',
       client: 'react-query',
