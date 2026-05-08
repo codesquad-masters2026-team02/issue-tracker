@@ -24,7 +24,7 @@ public class Issue {
     private IssueStatus status;
     @CreatedDate
     @Column("created_at")
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
     @Column("milestone_id")
     private AggregateReference<Milestone, Long> milestoneId;
 }
