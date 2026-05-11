@@ -19,7 +19,7 @@ jobs:
       # 3. BUILD THE IMAGE
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest -f Dockerfile.api .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest -f apps/spring-api/Dockerfile.api apps/spring-api
 
       # 4. PUSH TO DOCKER HUB
       - name: Log in to Docker Hub
