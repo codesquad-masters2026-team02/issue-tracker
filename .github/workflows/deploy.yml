@@ -1,4 +1,4 @@
-name: Deploy Spring API to Server
+name: Deploy Spring API to LA Server
 
 # 1. THE TRIGGER
 on:
@@ -6,7 +6,6 @@ on:
     branches: [ "develop" ]
     paths:
       - 'apps/spring-api/**' # Only run if backend code changes!
-  workflow_dispatch:
 
 jobs:
   build-and-deploy:
