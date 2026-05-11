@@ -50,7 +50,7 @@ jobs:
             docker stop api || true
             docker rm api || true
             # Run the new container, passing in your production DB secrets
-            docker run -d --name api -p 80:8080 \
+            docker run -d --name api -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_URL=${{ secrets.PROD_DB_URL }} \
               -e DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
