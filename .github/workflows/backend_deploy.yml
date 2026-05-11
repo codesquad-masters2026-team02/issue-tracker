@@ -10,17 +10,14 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       # 2. CHECKOUT CODE
       - name: Get source code
         uses: actions/checkout@v4
 
-      # 3. SET UP MULTI-ARCH DOCKER BUILDS
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
+      # 3. SET UP DOCKER BUILDS
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
