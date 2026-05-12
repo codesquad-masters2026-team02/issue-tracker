@@ -1,5 +1,9 @@
 package com.codesquad.issueTracker.issue;
 
+import com.codesquad.issueTracker.comment.Comment;
+import com.codesquad.issueTracker.comment.CommentService;
+import com.codesquad.issueTracker.comment.CommentType;
+import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
@@ -9,16 +13,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class IssueService {
     private final IssueRepository issueRepository;
+    private final CommentService commentService;
 
     public IssueResponse create(IssueRequest request) {
         Issue issue = request.toEntity();
         issueRepository.save(issue);
+
+        CommentRequest issueBodyRequest = new CommentRequest(request.content());
+        commentService.postComment(issue.getIssueNumber(),issueBodyRequest,CommentType.ISSUE_BODY);
+
         return IssueResponse.from(issue);
     }
 
@@ -36,8 +44,8 @@ public class IssueService {
         Issue issue = issueRepository.findById(id).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
         return IssueResponse.from(issue);
     }
-
-    public boolean existsById(Long id){
-        return issueRepository.existsById(id);
-    }
+//
+//    public boolean existsById(Long id){
+//        return issueRepository.existsById(id);
+//    }
 }
