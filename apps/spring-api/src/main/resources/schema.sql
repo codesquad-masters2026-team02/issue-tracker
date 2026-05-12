@@ -1,25 +1,25 @@
 DROP TABLE IF EXISTS issues;
 DROP TABLE IF EXISTS labels;
+DROP TABLE IF EXISTS issue_labels;
 
-CREATE TABLE ISSUES (
-    ISSUE_NUMBER BIGINT AUTO_INCREMENT PRIMARY KEY,
-    AUTHOR_ID BIGINT,
-    TITLE VARCHAR(255),
-    STATUS VARCHAR(50),
-    CREATED_AT DATETIME,
-    MILESTONE_ID BIGINT
+CREATE TABLE issues (
+    issue_number BIGINT AUTO_INCREMENT PRIMARY KEY,
+    author_id    BIGINT,
+    title        VARCHAR(255),
+    status       VARCHAR(50),
+    created_at   DATETIME,
+    milestone_id BIGINT
 );
-CREATE TABLE LABELS (
-    LABEL_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    NAME VARCHAR(50) NOT NULL,
-    DESCRIPTION VARCHAR(100),
-    BACKGROUND_COLOR CHAR(7) NOT NULL,
-    TEXT_COLOR VARCHAR(7) NOT NULL
+CREATE TABLE labels (
+    label_id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name             VARCHAR(50) NOT NULL,
+    description      VARCHAR(100),
+    background_color CHAR(7) NOT NULL,
+    text_color       VARCHAR(7) NOT NULL
 );
-CREATE TABLE ISSUE_LABELS
-(
-    ISSUE_NUMBER BIGINT,
-    LABEL_ID     BIGINT,
-    PRIMARY KEY (ISSUE_NUMBER, LABEL_ID)
-    INDEX idx_label_id (LABEL_ID)
+CREATE TABLE issue_labels (
+    issue_number BIGINT,
+    label_id     BIGINT,
+    PRIMARY KEY (issue_number, label_id)
 );
+CREATE INDEX idx_label_id ON issue_labels (label_id);
