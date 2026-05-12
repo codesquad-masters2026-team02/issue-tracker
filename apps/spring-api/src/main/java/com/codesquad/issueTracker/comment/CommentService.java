@@ -35,7 +35,7 @@ public class CommentService {
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
         else{
-            List<Comment> comments = commentRepo.findAllByIssueNumber(issueNumber);
+            List<Comment> comments = commentRepo.findAllByIssueNumberOrderByCreatedAtAsc(issueNumber);
             List<CommentResponse> commentResponses = comments.stream().map(CommentResponse::new).toList();
             return new CommentListResponse(issueNumber, commentResponses);
         }
