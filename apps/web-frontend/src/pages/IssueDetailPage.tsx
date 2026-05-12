@@ -1,5 +1,11 @@
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useIssueDetailQuery } from '../lib/api';
+import {
+  useCreateCommentMutation,
+  useIssueCommentsQuery,
+  useIssueDetailQuery,
+  type CommentResponse,
+} from '../lib/api';
 import { icon } from '../lib/icons';
 import './IssueDetailPage.css';
 
@@ -14,10 +20,85 @@ function formatRelative(iso: string) {
   return `${Math.floor(diffHour / 24)}일 전`;
 }
 
+interface CommentCardProps {
+  comment: CommentResponse;
+  isIssueBody?: boolean;
+}
+
+function CommentCard({ comment, isIssueBody = false }: CommentCardProps) {
+  return (
+    <article className="comment-card">
+      <header className="comment-card__head">
+        <img
+          src={icon('userImageSmall')}
+          alt=""
+          width={32}
+          height={32}
+          className="comment-card__avatar"
+        />
+        <strong className="comment-card__author">
+          {isIssueBody ? '작성자' : '댓글 작성자'}
+        </strong>
+        <span className="comment-card__time">{formatRelative(comment.created_at)}</span>
+        <div className="comment-card__actions">
+          {isIssueBody && <span className="author-tag">작성자</span>}
+          <button type="button" className="comment-card__action" disabled>
+            <img src={icon('edit')} alt="" width={16} height={16} />
+            편집
+          </button>
+          <button type="button" className="comment-card__action" disabled>
+            <img src={icon('smile')} alt="" width={16} height={16} />
+            반응
+          </button>
+        </div>
+      </header>
+      <div className="comment-card__body">
+        {comment.content.trim() ? (
+          <p className="comment-card__content">{comment.content}</p>
+        ) : (
+          <p className="comment-card__placeholder">내용이 없습니다.</p>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export function IssueDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const { data: issue, isLoading, isError, error } = useIssueDetailQuery(id);
+  const {
+    data: commentList,
+    isLoading: isCommentsLoading,
+    isError: isCommentsError,
+    error: commentsError,
+  } = useIssueCommentsQuery(id);
+  const {
+    mutate: createComment,
+    isPending: isCommentPending,
+    error: createCommentError,
+  } = useCreateCommentMutation(id);
+  const [newComment, setNewComment] = useState('');
+
+  const { issueBodyComment, discussionComments } = useMemo(() => {
+    const comments = commentList?.comments ?? [];
+    return {
+      issueBodyComment: comments.find((comment) => comment.type === 'ISSUE_BODY'),
+      discussionComments: comments.filter((comment) => comment.type === 'DISCUSSION'),
+    };
+  }, [commentList]);
+
+  const canSubmitComment = newComment.trim().length > 0 && !isCommentPending;
+
+  const handleCommentSubmit = () => {
+    if (!canSubmitComment) return;
+    createComment(
+      { content: newComment.trim() },
+      {
+        onSuccess: () => setNewComment(''),
+      },
+    );
+  };
 
   if (isLoading) return <p className="issue-detail__status">불러오는 중…</p>;
   if (isError) {
@@ -75,61 +156,71 @@ export function IssueDetailPage() {
         <span className="issue-detail__status-text">
           이 이슈가 {formatRelative(issue.createdAt)}에 작성되었습니다
         </span>
-        <span className="issue-detail__status-text">코멘트 0개</span>
+        <span className="issue-detail__status-text">
+          코멘트 {discussionComments.length}개
+        </span>
       </div>
       <hr className="issue-detail__rule" />
 
       <div className="issue-detail__body">
         {/* 좌: 콘텐츠 */}
         <section className="issue-detail__content">
-          <article className="comment-card">
-            <header className="comment-card__head">
-              <img
-                src={icon('userImageSmall')}
-                alt=""
-                width={32}
-                height={32}
-                className="comment-card__avatar"
-              />
-              <strong className="comment-card__author">작성자</strong>
-              <span className="comment-card__time">{formatRelative(issue.createdAt)}</span>
-              <div className="comment-card__actions">
-                <span className="author-tag">작성자</span>
-                <button type="button" className="comment-card__action" disabled>
-                  <img src={icon('edit')} alt="" width={16} height={16} />
-                  편집
-                </button>
-                <button type="button" className="comment-card__action" disabled>
-                  <img src={icon('smile')} alt="" width={16} height={16} />
-                  반응
-                </button>
+          {isCommentsLoading && (
+            <p className="issue-detail__status">코멘트를 불러오는 중…</p>
+          )}
+          {isCommentsError && (
+            <p className="issue-detail__status issue-detail__status--error">
+              {(commentsError as Error)?.message ?? '코멘트를 불러오지 못했습니다.'}
+            </p>
+          )}
+          {!isCommentsLoading && !isCommentsError && issueBodyComment && (
+            <CommentCard comment={issueBodyComment} isIssueBody />
+          )}
+          {!isCommentsLoading && !isCommentsError && !issueBodyComment && (
+            <article className="comment-card">
+              <div className="comment-card__body">
+                <p className="comment-card__placeholder">본문 내용이 없습니다.</p>
               </div>
-            </header>
-            <div className="comment-card__body">
-              {/* TODO: API 의 IssueResponse 에 content 필드 추가되면 본문 렌더 */}
-              <p className="comment-card__placeholder">
-                본문 내용이 API 스펙에 아직 포함되어 있지 않습니다.
-              </p>
-            </div>
-          </article>
+            </article>
+          )}
+          {!isCommentsLoading && !isCommentsError && discussionComments.map((comment) => (
+            <CommentCard key={comment.id} comment={comment} />
+          ))}
 
           {/* 새 코멘트 */}
           <div className="textarea-wrap">
             <textarea
               className="text-area"
               placeholder="코멘트를 입력하세요"
-              disabled
+              value={newComment}
+              disabled={isCommentPending}
+              onChange={(e) => setNewComment(e.target.value)}
             />
+            {newComment.length > 0 && (
+              <div className="textarea-wrap__counter">
+                띄어쓰기 포함 {newComment.length}자
+              </div>
+            )}
             <hr className="textarea-wrap__divider" />
             <button type="button" className="textarea-wrap__attach" disabled>
               <img src={icon('paperclip')} alt="" width={16} height={16} />
               파일 첨부하기
             </button>
           </div>
+          {createCommentError && (
+            <p className="new-comment__error">
+              {(createCommentError as Error).message}
+            </p>
+          )}
           <div className="new-comment__footer">
-            <button type="button" className="btn btn--primary" disabled title="코멘트 API 미구현">
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={!canSubmitComment}
+              onClick={handleCommentSubmit}
+            >
               <img src={icon('plus')} alt="" width={16} height={16} />
-              코멘트 작성
+              {isCommentPending ? '작성 중…' : '코멘트 작성'}
             </button>
           </div>
         </section>

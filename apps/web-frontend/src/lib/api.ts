@@ -28,6 +28,25 @@ export interface IssueRequest {
   content: string;
 }
 
+export type CommentType = 'ISSUE_BODY' | 'DISCUSSION';
+
+export interface CommentRequest {
+  content: string;
+}
+
+export interface CommentResponse {
+  id: number;
+  type: CommentType;
+  content: string;
+  created_at: string; // ISO date-time
+}
+
+export interface CommentListResponse {
+  issueNumber: number;
+  comment_count: number;
+  comments: CommentResponse[];
+}
+
 export interface ErrorDto {
   code?: string;
   message?: string;
@@ -64,11 +83,36 @@ async function createIssue(body: IssueRequest): Promise<IssueResponse> {
   return data.data;
 }
 
+async function fetchIssueComments(issueNumber: number): Promise<CommentListResponse> {
+  const { data } = await api.get<ApiResponse<CommentListResponse>>(
+    `/api/issues/${issueNumber}/comments`,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '코멘트 목록을 불러오지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function createComment(
+  issueNumber: number,
+  body: CommentRequest,
+): Promise<CommentResponse> {
+  const { data } = await api.post<ApiResponse<CommentResponse>>(
+    `/api/issues/${issueNumber}/comments`,
+    body,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '코멘트를 작성하지 못했습니다.');
+  }
+  return data.data;
+}
+
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
   list: () => [...issueKeys.all, 'list'] as const,
   detail: (id: number) => [...issueKeys.all, 'detail', id] as const,
+  comments: (id: number) => [...issueKeys.detail(id), 'comments'] as const,
 };
 
 export function useIssueListQuery() {
@@ -92,6 +136,24 @@ export function useCreateIssueMutation() {
     mutationFn: createIssue,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useIssueCommentsQuery(issueNumber: number) {
+  return useQuery({
+    queryKey: issueKeys.comments(issueNumber),
+    queryFn: () => fetchIssueComments(issueNumber),
+    enabled: Number.isFinite(issueNumber) && issueNumber > 0,
+  });
+}
+
+export function useCreateCommentMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CommentRequest) => createComment(issueNumber, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.comments(issueNumber) });
     },
   });
 }
