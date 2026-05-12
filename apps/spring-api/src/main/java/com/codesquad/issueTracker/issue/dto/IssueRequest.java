@@ -8,6 +8,6 @@ public record IssueRequest(
         String content
 ) {
     public Issue toEntity() {
-        return new Issue(null, null, title, IssueStatus.OPEN, null, null);
+        return new Issue(null, null, title, IssueStatus.OPEN, null, null, null);
     }
 }
