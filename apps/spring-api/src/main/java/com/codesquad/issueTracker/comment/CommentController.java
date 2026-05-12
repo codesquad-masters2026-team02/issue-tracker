@@ -18,13 +18,14 @@ public class CommentController {
     private final CommentService service;
 
     @PostMapping("/api/issues/{id}/comments")
-    public ResponseEntity<ApiResponse<CommentResponse>> postCommentForIssue(@RequestBody CommentRequest request){
-        CommentResponse response = service.postComment();
-        URI uri = ServletUriComponentsBuilder.
+    public ResponseEntity<ApiResponse<CommentResponse>> postCommentForIssue(@PathVariable Long id,@RequestBody CommentRequest request){
+        CommentResponse response = service.postComment(id, request, CommentType.DISCUSSION);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/issues/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).body(ApiResponse.ok(response));
     }
 
-    @GetMapping("/api/issues/{id}/comments")
-    public ResponseEntity<ApiResponse<CommentListResponse>> getCommentsForIssue(@PathVariable Long id, @){
-
-    }
+//    @GetMapping("/api/issues/{id}/comments")
+//    public ResponseEntity<ApiResponse<CommentListResponse>> getCommentsForIssue(@PathVariable Long id){
+//        CommentListResponse commentList = service.getCommentListForIssue(id);
+//    }
 }
