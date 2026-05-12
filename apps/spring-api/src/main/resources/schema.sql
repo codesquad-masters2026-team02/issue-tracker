@@ -17,9 +17,12 @@ CREATE TABLE labels (
     background_color CHAR(7) NOT NULL,
     text_color       VARCHAR(7) NOT NULL
 );
-CREATE TABLE issue_labels (
+CREATE TABLE issue_labels
+(
     issue_number BIGINT,
     label_id     BIGINT,
-    PRIMARY KEY (issue_number, label_id)
+    PRIMARY KEY (issue_number, label_id),
+    FOREIGN KEY (issue_number) REFERENCES issues (issue_number) ON DELETE CASCADE,
+    FOREIGN KEY (label_id) REFERENCES labels (label_id) ON DELETE CASCADE
 );
 CREATE INDEX idx_label_id ON issue_labels (label_id);
