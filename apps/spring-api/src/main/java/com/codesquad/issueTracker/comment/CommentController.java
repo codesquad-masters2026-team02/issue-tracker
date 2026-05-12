@@ -24,8 +24,9 @@ public class CommentController {
         return ResponseEntity.created(location).body(ApiResponse.ok(response));
     }
 
-//    @GetMapping("/api/issues/{id}/comments")
-//    public ResponseEntity<ApiResponse<CommentListResponse>> getCommentsForIssue(@PathVariable Long id){
-//        CommentListResponse commentList = service.getCommentListForIssue(id);
-//    }
+    @GetMapping("/api/issues/{id}/comments")
+    public ResponseEntity<ApiResponse<CommentListResponse>> getCommentsForIssue(@PathVariable Long id){
+        CommentListResponse commentList = service.getCommentListForIssue(id);
+        return ResponseEntity.ok(ApiResponse.ok(commentList));
+    }
 }
