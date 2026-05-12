@@ -1,9 +1,11 @@
 package com.codesquad.issueTracker.comment;
 
+import com.codesquad.issueTracker.issue.Issue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -31,5 +33,5 @@ public class Comment {
     @Column("USER_ID")
     private Long userId;
     @Column("ISSUE_NUMBER")
-    private Long issueNumber;
+    private AggregateReference<Issue,Long> issueNumber;
 }
