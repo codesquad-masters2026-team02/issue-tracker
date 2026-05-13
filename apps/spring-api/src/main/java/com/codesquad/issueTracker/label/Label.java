@@ -17,4 +17,11 @@ public class Label {
     private String description;
     private String backgroundColor;
     private TextColor textColor;
+
+    public void update(String name, String description, String backgroundColor, TextColor textColor) {
+        this.name = name;
+        this.description = description;
+        this.backgroundColor = backgroundColor;
+        this.textColor = textColor;
+    }
 }
