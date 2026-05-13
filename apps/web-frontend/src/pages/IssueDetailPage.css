@@ -83,6 +83,9 @@
   color: var(--color-text-secondary);
   font-size: var(--text-caption-size);
 }
+.comment-card__action--danger {
+  color: var(--color-text-error);
+}
 .comment-card__action[disabled] { opacity: var(--opacity-disabled); cursor: not-allowed; }
 
 .author-tag {
@@ -102,6 +105,10 @@
   line-height: var(--line-height-normal);
 }
 .comment-card__placeholder { color: var(--color-text-tertiary); font-size: var(--text-caption-size); }
+.comment-thread__error {
+  color: var(--color-text-error);
+  font-size: var(--text-caption-size);
+}
 
 /* 새 코멘트 푸터 */
 .new-comment__footer { display: flex; justify-content: flex-end; }

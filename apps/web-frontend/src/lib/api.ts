@@ -107,6 +107,13 @@ async function createComment(
   return data.data;
 }
 
+async function deleteComment(commentId: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<void>>(`/api/comments/${commentId}`);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '코멘트를 삭제하지 못했습니다.');
+  }
+}
+
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
@@ -152,6 +159,16 @@ export function useCreateCommentMutation(issueNumber: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: CommentRequest) => createComment(issueNumber, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.comments(issueNumber) });
+    },
+  });
+}
+
+export function useDeleteCommentMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteComment,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.comments(issueNumber) });
     },

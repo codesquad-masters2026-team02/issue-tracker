@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   useCreateCommentMutation,
+  useDeleteCommentMutation,
   useIssueCommentsQuery,
   useIssueDetailQuery,
   type CommentResponse,
@@ -23,9 +24,16 @@ function formatRelative(iso: string) {
 interface CommentCardProps {
   comment: CommentResponse;
   isIssueBody?: boolean;
+  isDeleting?: boolean;
+  onDelete?: (comment: CommentResponse) => void;
 }
 
-function CommentCard({ comment, isIssueBody = false }: CommentCardProps) {
+function CommentCard({
+  comment,
+  isIssueBody = false,
+  isDeleting = false,
+  onDelete,
+}: CommentCardProps) {
   return (
     <article className="comment-card">
       <header className="comment-card__head">
@@ -50,6 +58,17 @@ function CommentCard({ comment, isIssueBody = false }: CommentCardProps) {
             <img src={icon('smile')} alt="" width={16} height={16} />
             반응
           </button>
+          {!isIssueBody && onDelete && (
+            <button
+              type="button"
+              className="comment-card__action comment-card__action--danger"
+              disabled={isDeleting}
+              onClick={() => onDelete(comment)}
+            >
+              <img src={icon('trash')} alt="" width={16} height={16} />
+              {isDeleting ? '삭제 중…' : '삭제'}
+            </button>
+          )}
         </div>
       </header>
       <div className="comment-card__body">
@@ -78,7 +97,13 @@ export function IssueDetailPage() {
     isPending: isCommentPending,
     error: createCommentError,
   } = useCreateCommentMutation(id);
+  const {
+    mutate: deleteComment,
+    isPending: isDeletePending,
+    error: deleteCommentError,
+  } = useDeleteCommentMutation(id);
   const [newComment, setNewComment] = useState('');
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
 
   const { issueBodyComment, discussionComments } = useMemo(() => {
     const comments = commentList?.comments ?? [];
@@ -98,6 +123,16 @@ export function IssueDetailPage() {
         onSuccess: () => setNewComment(''),
       },
     );
+  };
+
+  const handleCommentDelete = (comment: CommentResponse) => {
+    if (isDeletePending) return;
+    if (!window.confirm('코멘트를 삭제하시겠습니까?')) return;
+
+    setDeletingCommentId(comment.id);
+    deleteComment(comment.id, {
+      onSettled: () => setDeletingCommentId(null),
+    });
   };
 
   if (isLoading) return <p className="issue-detail__status">불러오는 중…</p>;
@@ -184,8 +219,18 @@ export function IssueDetailPage() {
             </article>
           )}
           {!isCommentsLoading && !isCommentsError && discussionComments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
+            <CommentCard
+              key={comment.id}
+              comment={comment}
+              isDeleting={deletingCommentId === comment.id}
+              onDelete={handleCommentDelete}
+            />
           ))}
+          {deleteCommentError && (
+            <p className="comment-thread__error">
+              {(deleteCommentError as Error).message}
+            </p>
+          )}
 
           {/* 새 코멘트 */}
           <div className="textarea-wrap">
