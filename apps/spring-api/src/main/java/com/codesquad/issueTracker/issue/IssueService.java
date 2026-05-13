@@ -44,8 +44,4 @@ public class IssueService {
         Issue issue = issueRepository.findById(id).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
         return IssueResponse.from(issue);
     }
-//
-//    public boolean existsById(Long id){
-//        return issueRepository.existsById(id);
-//    }
 }

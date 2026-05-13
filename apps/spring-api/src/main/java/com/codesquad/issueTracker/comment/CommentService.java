@@ -40,4 +40,10 @@ public class CommentService {
             return new CommentListResponse(issueNumber, commentResponses);
         }
     }
+
+    public void deleteCommentByCommentId(Long id){
+        if(commentRepo.deleteCommentById(id) == 0){
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
+        }
+    }
 }

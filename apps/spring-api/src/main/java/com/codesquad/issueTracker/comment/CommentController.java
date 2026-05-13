@@ -4,6 +4,7 @@ import com.codesquad.issueTracker.comment.dto.CommentListResponse;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.comment.dto.CommentResponse;
 import com.codesquad.issueTracker.common.response.ApiResponse;
+import com.codesquad.issueTracker.common.response.ErrorDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,5 +30,11 @@ public class CommentController {
     public ResponseEntity<ApiResponse<CommentListResponse>> getCommentsForIssue(@PathVariable Long id){
         CommentListResponse commentList = service.getCommentListForIssue(id);
         return ResponseEntity.ok(ApiResponse.ok(commentList));
+    }
+
+    @DeleteMapping("/api/comments/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteCommentByCommentId(@PathVariable Long id){
+        service.deleteCommentByCommentId(id);
+        return ResponseEntity.ok(ApiResponse.noContent());
     }
 }
