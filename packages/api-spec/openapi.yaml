@@ -6,6 +6,96 @@ servers:
 - url: http://localhost:8080
   description: Generated server url
 paths:
+  /api/labels/{id}:
+    get:
+      tags:
+      - label-controller
+      operationId: getLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
+    put:
+      tags:
+      - label-controller
+      operationId: updateLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
+    delete:
+      tags:
+      - label-controller
+      operationId: deleteLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/labels:
+    get:
+      tags:
+      - label-controller
+      operationId: getLabels
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelsResponse"
+    post:
+      tags:
+      - label-controller
+      operationId: createLabel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
   /api/issues:
     get:
       tags:
@@ -56,6 +146,58 @@ paths:
                 $ref: "#/components/schemas/ApiResponseIssueResponse"
 components:
   schemas:
+    LabelRequest:
+      required:
+      - backgroundColor
+      - name
+      - textColor
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        backgroundColor:
+          pattern: "^#[A-Fa-f0-9]{6}$"
+          type: string
+        textColor:
+          type: string
+          enum:
+          - DARK
+          - LIGHT
+    ApiResponseLabelResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/LabelResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    ErrorDto:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    LabelResponse:
+      type: object
+      properties:
+        labelId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        backgroundColor:
+          type: string
+        textColor:
+          type: string
+          enum:
+          - DARK
+          - LIGHT
     IssueRequest:
       type: object
       properties:
@@ -72,13 +214,6 @@ components:
           $ref: "#/components/schemas/IssueResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
-    ErrorDto:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
     IssueResponse:
       type: object
       properties:
@@ -95,6 +230,22 @@ components:
         createdAt:
           type: string
           format: date-time
+    ApiResponseLabelsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/LabelsResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    LabelsResponse:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelResponse"
     ApiResponseListIssueResponse:
       type: object
       properties:
@@ -104,5 +255,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/IssueResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
         error:
           $ref: "#/components/schemas/ErrorDto"
