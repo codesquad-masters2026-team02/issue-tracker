@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS issues;
 DROP TABLE IF EXISTS labels;
 DROP TABLE IF EXISTS issue_labels;
+DROP TABLE IF EXISTS comments;
 
 CREATE TABLE issues (
     issue_number BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -17,20 +18,17 @@ CREATE TABLE labels (
     background_color CHAR(7) NOT NULL,
     text_color       VARCHAR(7) NOT NULL
 );
-
-DROP TABLE IF EXISTS COMMENTS;
-
-CREATE TABLE COMMENTS (
+CREATE TABLE comments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    CONTENT TEXT,
-    TYPE VARCHAR(16) NOT NULL,
-    ATTACHMENT_KEY VARCHAR(255),
-    CREATED_AT DATETIME NOT NULL,
-    UPDATED_AT DATETIME,
-    USER_ID BIGINT,
-    ISSUE_NUMBER BIGINT,
-    CONSTRAINT FK_ISSUE_NUMBER FOREIGN KEY (ISSUE_NUMBER) REFERENCES ISSUES(ISSUE_NUMBER)
-)
+    content TEXT,
+    type VARCHAR(16) NOT NULL,
+    attachment_key VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    user_id BIGINT,
+    issue_number BIGINT,
+    CONSTRAINT fk_issue_number FOREIGN KEY (issue_number) REFERENCES ISSUES(issue_number)
+);
 CREATE TABLE issue_labels
 (
     issue_number BIGINT,
