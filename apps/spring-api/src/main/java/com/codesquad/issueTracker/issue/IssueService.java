@@ -8,26 +8,30 @@ import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class IssueService {
     private final IssueRepository issueRepository;
     private final CommentService commentService;
 
+    @Transactional
     public IssueResponse create(IssueRequest request) {
         Issue issue = request.toEntity();
-        issueRepository.save(issue);
+        Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
-        commentService.postComment(issue.getIssueNumber(),issueBodyRequest,CommentType.ISSUE_BODY);
+        commentService.postComment(saved.getIssueNumber(),issueBodyRequest,CommentType.ISSUE_BODY);
 
-        return IssueResponse.from(issue);
+        return IssueResponse.from(saved);
     }
 
 

@@ -6,6 +6,96 @@ servers:
 - url: http://localhost:8080
   description: Generated server url
 paths:
+  /api/labels/{id}:
+    get:
+      tags:
+      - label-controller
+      operationId: getLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
+    put:
+      tags:
+      - label-controller
+      operationId: updateLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
+    delete:
+      tags:
+      - label-controller
+      operationId: deleteLabel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/labels:
+    get:
+      tags:
+      - label-controller
+      operationId: getLabels
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelsResponse"
+    post:
+      tags:
+      - label-controller
+      operationId: createLabel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLabelResponse"
   /api/issues:
     get:
       tags:
@@ -35,6 +125,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseIssueResponse"
+  /api/issues/{id}/comments:
+    get:
+      tags:
+      - comment-controller
+      operationId: getCommentsForIssue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentListResponse"
+    post:
+      tags:
+      - comment-controller
+      operationId: postCommentForIssue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentResponse"
   /api/issues/{id}:
     get:
       tags:
@@ -54,22 +187,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseIssueResponse"
+  /api/comments/{id}:
+    delete:
+      tags:
+      - comment-controller
+      operationId: deleteCommentByCommentId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
 components:
   schemas:
-    IssueRequest:
+    LabelRequest:
+      required:
+      - backgroundColor
+      - name
+      - textColor
       type: object
       properties:
-        title:
+        name:
           type: string
-        content:
+        description:
           type: string
-    ApiResponseIssueResponse:
+        backgroundColor:
+          pattern: "^#[A-Fa-f0-9]{6}$"
+          type: string
+        textColor:
+          type: string
+          enum:
+          - DARK
+          - LIGHT
+    ApiResponseLabelResponse:
       type: object
       properties:
         success:
           type: boolean
         data:
-          $ref: "#/components/schemas/IssueResponse"
+          $ref: "#/components/schemas/LabelResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
     ErrorDto:
@@ -79,6 +243,44 @@ components:
           type: string
         message:
           type: string
+    LabelResponse:
+      type: object
+      properties:
+        labelId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        backgroundColor:
+          type: string
+        textColor:
+          type: string
+          enum:
+          - DARK
+          - LIGHT
+    IssueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        labelIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    ApiResponseIssueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/IssueResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
     IssueResponse:
       type: object
       properties:
@@ -95,6 +297,49 @@ components:
         createdAt:
           type: string
           format: date-time
+    CommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+    ApiResponseCommentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/CommentResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ApiResponseLabelsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/LabelsResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    LabelsResponse:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelResponse"
     ApiResponseListIssueResponse:
       type: object
       properties:
@@ -104,5 +349,36 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/IssueResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    ApiResponseCommentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/CommentListResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    CommentListResponse:
+      type: object
+      properties:
+        issueNumber:
+          type: integer
+          format: int64
+        comment_count:
+          type: integer
+          format: int32
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentResponse"
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
         error:
           $ref: "#/components/schemas/ErrorDto"

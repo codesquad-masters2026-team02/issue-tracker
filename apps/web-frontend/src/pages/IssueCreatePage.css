@@ -35,3 +35,58 @@
   color: var(--color-text-error);
   font-size: var(--text-caption-size);
 }
+
+.sidebar-card__section--dropdown {
+  position: relative;
+}
+
+.selected-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.label-select {
+  position: absolute;
+  top: calc(100% - var(--space-2));
+  right: var(--space-4);
+  z-index: 10;
+  width: 248px;
+  max-height: 320px;
+  overflow: auto;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-dropdown);
+  box-shadow: var(--shadow-dropdown);
+}
+
+.label-select__head {
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption-size);
+  font-weight: var(--font-weight-medium);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.label-select__status {
+  padding: var(--space-4);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-caption-size);
+}
+
+.label-select__status--error {
+  color: var(--color-text-error);
+}
+
+.label-select__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+}
+
+.label-select__item:hover {
+  background-color: var(--color-bg-hover);
+}

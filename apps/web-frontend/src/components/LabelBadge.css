@@ -1,0 +1,12 @@
+.label-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 180px;
+  min-height: var(--badge-height);
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-badge);
+  font-size: var(--text-caption-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  word-break: break-word;
+}

@@ -26,6 +26,28 @@ export interface IssueResponse {
 export interface IssueRequest {
   title: string;
   content: string;
+  labelIds?: number[];
+}
+
+export type LabelTextColor = 'DARK' | 'LIGHT';
+
+export interface LabelRequest {
+  name: string;
+  description?: string;
+  backgroundColor: string;
+  textColor: LabelTextColor;
+}
+
+export interface LabelResponse {
+  labelId: number;
+  name: string;
+  description?: string;
+  backgroundColor: string;
+  textColor: LabelTextColor;
+}
+
+export interface LabelsResponse {
+  labels: LabelResponse[];
 }
 
 export type CommentType = 'ISSUE_BODY' | 'DISCUSSION';
@@ -83,6 +105,37 @@ async function createIssue(body: IssueRequest): Promise<IssueResponse> {
   return data.data;
 }
 
+async function fetchLabels(): Promise<LabelResponse[]> {
+  const { data } = await api.get<ApiResponse<LabelsResponse>>('/api/labels');
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '레이블 목록을 불러오지 못했습니다.');
+  }
+  return data.data.labels ?? [];
+}
+
+async function createLabel(body: LabelRequest): Promise<LabelResponse> {
+  const { data } = await api.post<ApiResponse<LabelResponse>>('/api/labels', body);
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '레이블을 생성하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function updateLabel(id: number, body: LabelRequest): Promise<LabelResponse> {
+  const { data } = await api.put<ApiResponse<LabelResponse>>(`/api/labels/${id}`, body);
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '레이블을 수정하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function deleteLabel(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<void>>(`/api/labels/${id}`);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '레이블을 삭제하지 못했습니다.');
+  }
+}
+
 async function fetchIssueComments(issueNumber: number): Promise<CommentListResponse> {
   const { data } = await api.get<ApiResponse<CommentListResponse>>(
     `/api/issues/${issueNumber}/comments`,
@@ -122,6 +175,11 @@ export const issueKeys = {
   comments: (id: number) => [...issueKeys.detail(id), 'comments'] as const,
 };
 
+export const labelKeys = {
+  all: ['labels'] as const,
+  list: () => [...labelKeys.all, 'list'] as const,
+};
+
 export function useIssueListQuery() {
   return useQuery({
     queryKey: issueKeys.list(),
@@ -143,6 +201,45 @@ export function useCreateIssueMutation() {
     mutationFn: createIssue,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useLabelListQuery() {
+  return useQuery({
+    queryKey: labelKeys.list(),
+    queryFn: fetchLabels,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
+  });
+}
+
+export function useCreateLabelMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createLabel,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: labelKeys.all });
+    },
+  });
+}
+
+export function useUpdateLabelMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: LabelRequest }) => updateLabel(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: labelKeys.all });
+    },
+  });
+}
+
+export function useDeleteLabelMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteLabel,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: labelKeys.all });
     },
   });
 }
