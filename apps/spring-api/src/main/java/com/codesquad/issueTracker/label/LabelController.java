@@ -4,12 +4,14 @@ import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.label.dto.LabelRequest;
 import com.codesquad.issueTracker.label.dto.LabelResponse;
 import com.codesquad.issueTracker.label.dto.LabelsResponse;
+import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -33,7 +35,7 @@ public class LabelController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<LabelResponse>> createLabel(LabelRequest request) {
+    public ResponseEntity<ApiResponse<LabelResponse>> createLabel(@Valid @RequestBody LabelRequest request) {
         LabelResponse created = labelService.create(request);
 
         URI location = ServletUriComponentsBuilder
