@@ -25,6 +25,6 @@ public class Issue {
     private LocalDateTime createdAt;
     private Long milestoneId;
 
-    @MappedCollection(idColumn = "issue_number")
+    @MappedCollection(idColumn = "ISSUE_NUMBER")
     private Set<IssueLabel> labels = new HashSet<>();
 }
