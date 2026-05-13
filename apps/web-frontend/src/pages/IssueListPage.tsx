@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useIssueListQuery, type IssueResponse } from '../lib/api';
+import {
+  useIssueListQuery,
+  useLabelListQuery,
+  type IssueResponse,
+} from '../lib/api';
 import { icon } from '../lib/icons';
 import './IssueListPage.css';
 
@@ -20,6 +24,7 @@ type Tab = 'OPEN' | 'CLOSED';
 
 export function IssueListPage() {
   const { data, isLoading, isError, error } = useIssueListQuery();
+  const { data: labels = [] } = useLabelListQuery();
   const [tab, setTab] = useState<Tab>('OPEN');
   const [keyword, setKeyword] = useState('is:issue is:open');
 
@@ -59,10 +64,10 @@ export function IssueListPage() {
         <div className="issue-list__actions">
           {/* 레이블 + 마일스톤이 하나의 outline pill */}
           <div className="chip-group">
-            <button type="button" className="chip-group__item">
+            <Link to="/labels" className="chip-group__item">
               <img src={icon('label')} alt="" width={16} height={16} />
-              레이블(0)
-            </button>
+              레이블({labels.length})
+            </Link>
             <div className="chip-group__divider" />
             <button type="button" className="chip-group__item">
               <img src={icon('milestone')} alt="" width={16} height={16} />
