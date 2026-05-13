@@ -37,7 +37,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
-      # 5. DEPLOY TO REMOTE SERVER (LA)
+      # 5. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -49,8 +49,9 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
             docker stop api || true
             docker rm api || true
-            # Run the new container, passing in your production DB secrets
-            docker run -d --name api -p 80:8080 \
+            # Run the API behind nginx. nginx owns public port 80, so expose
+            # Spring only on localhost for reverse proxying.
+            docker run -d --name api -p 127.0.0.1:8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_URL=${{ secrets.PROD_DB_URL }} \
               -e DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
