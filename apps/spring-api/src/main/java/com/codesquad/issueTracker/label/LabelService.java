@@ -16,11 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class LabelService {
     private final LabelRepository labelRepository;
 
+    @Transactional(readOnly = true)
     public LabelsResponse findLabels() {
         List<Label> labels = labelRepository.findAll();
         return LabelsResponse.from(labels);
     }
 
+    @Transactional(readOnly = true)
     public LabelResponse findLabelById(Long id) {
         Label label = findById(id);
         return LabelResponse.from(label);
@@ -39,6 +41,11 @@ public class LabelService {
         Label savedlabel = labelRepository.save(label);
 
         return LabelResponse.from(savedlabel);
+    }
+
+    public void delete(Long id) {
+        Label label = findById(id);
+        labelRepository.delete(label);
     }
 
     private Label findById(Long id) {
