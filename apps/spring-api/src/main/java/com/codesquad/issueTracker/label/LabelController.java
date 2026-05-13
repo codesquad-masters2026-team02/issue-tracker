@@ -21,7 +21,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/labels")
-@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class LabelController {
     private final LabelService labelService;

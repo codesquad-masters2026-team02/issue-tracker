@@ -39,7 +39,7 @@ jobs:
 
       # 5. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
@@ -55,5 +55,6 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_URL=${{ secrets.PROD_DB_URL }} \
               -e DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
+              -e CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
               -e DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
               ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
