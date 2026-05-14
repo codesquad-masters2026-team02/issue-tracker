@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface MilestoneRepository extends ListCrudRepository<Milestone, Long> {
 
-    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('closed' , 'CLOSED') AND is_delted = false")
+    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status = 'CLOSED' AND is_deleted = false")
     int getClosedMilestoneCount();
 
-    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('open' , 'OPEN') AND is_deleted = false")
+    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status = 'OPEN' AND is_deleted = false")
     int getOpenMilestoneCount();
 
     @Modifying

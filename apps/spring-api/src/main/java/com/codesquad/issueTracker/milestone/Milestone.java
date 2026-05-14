@@ -20,12 +20,16 @@ public class Milestone {
     private String description;
     private Integer openIssueCount;
     private Integer closedIssueCount;
-    private String status;
+    private MilestoneStatus status;
     private Boolean isDeleted;
 
     public void update(String name, LocalDate dueDate, String description){
         this.name = name;
         if(dueDate != null) this.dueDate = dueDate;
         if((description != null) && !(description.isEmpty())) this.description = description;
+    }
+
+    public void changeStatus(MilestoneStatus status){
+        this.status = status;
     }
 }

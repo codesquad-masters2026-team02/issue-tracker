@@ -1,6 +1,7 @@
 package com.codesquad.issueTracker.milestone.dto;
 
 import com.codesquad.issueTracker.milestone.Milestone;
+import com.codesquad.issueTracker.milestone.MilestoneStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 
@@ -13,6 +14,6 @@ public record MilestoneRequest (
         LocalDate dueDate
 ){
     public Milestone toEntity(){
-        return new Milestone(null, name, dueDate,description,0,0,"OPEN",false);
+        return new Milestone(null, name, dueDate,description,0,0, MilestoneStatus.OPEN,false);
     }
 }

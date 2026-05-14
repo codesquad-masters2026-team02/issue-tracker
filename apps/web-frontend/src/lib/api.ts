@@ -56,11 +56,18 @@ export interface MilestoneRequest {
   dueDate?: string;
 }
 
+export type MilestoneStatus = 'OPEN' | 'CLOSED';
+
+export interface MilestoneStatusUpdateRequest {
+  status: MilestoneStatus;
+}
+
 export interface MilestoneResponse {
   id: number;
   name: string;
   description?: string;
   dueDate?: string | null;
+  status: MilestoneStatus;
   openIssueCount: number;
   closedIssueCount: number;
 }
@@ -181,6 +188,20 @@ async function updateMilestone(
   const { data } = await api.put<ApiResponse<MilestoneResponse>>(`/api/milestones/${id}`, body);
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '마일스톤을 수정하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function updateMilestoneStatus(
+  id: number,
+  body: MilestoneStatusUpdateRequest,
+): Promise<MilestoneResponse> {
+  const { data } = await api.patch<ApiResponse<MilestoneResponse>>(
+    `/api/milestones/${id}`,
+    body,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '마일스톤 상태를 수정하지 못했습니다.');
   }
   return data.data;
 }
@@ -329,6 +350,18 @@ export function useUpdateMilestoneMutation() {
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: MilestoneRequest }) => (
       updateMilestone(id, body)
+    ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useUpdateMilestoneStatusMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: MilestoneStatusUpdateRequest }) => (
+      updateMilestoneStatus(id, body)
     ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: milestoneKeys.all });

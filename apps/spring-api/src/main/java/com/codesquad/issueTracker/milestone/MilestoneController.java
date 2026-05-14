@@ -5,6 +5,7 @@ import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
 import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneStatusUpdateRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class MilestoneController {
     private final MilestoneService service;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<MilestoneResponse>> postNewMilestone(@RequestBody MilestoneRequest request){
+    public ResponseEntity<ApiResponse<MilestoneResponse>> postNewMilestone(@Valid @RequestBody MilestoneRequest request){
         MilestoneResponse newMilestone = service.postNewMilestone(request);
 
         URI location = ServletUriComponentsBuilder
@@ -45,13 +46,14 @@ public class MilestoneController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestone(@PathVariable Long id, @RequestBody MilestoneRequest request){
+    public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestone(@PathVariable Long id, @Valid @RequestBody MilestoneRequest request){
         MilestoneResponse response = service.updateMilestoneById(id, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestoneStatus(@PathVariable Long id, @RequestBody MilestoneStatusUpdateRequest request){
-
+    public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestoneStatus(@PathVariable Long id, @Valid @RequestBody MilestoneStatusUpdateRequest request){
+        MilestoneResponse response = service.changeMilestoneStatusById(id, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

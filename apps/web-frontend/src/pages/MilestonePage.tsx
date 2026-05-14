@@ -6,6 +6,8 @@ import {
   useLabelListQuery,
   useMilestoneListQuery,
   useUpdateMilestoneMutation,
+  useUpdateMilestoneStatusMutation,
+  type MilestoneStatus,
   type MilestoneRequest,
   type MilestoneResponse,
 } from '../lib/api';
@@ -145,17 +147,22 @@ function MilestoneForm({
 interface MilestoneRowProps {
   milestone: MilestoneResponse;
   isDeleting: boolean;
+  isStatusUpdating: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onStatusToggle: () => void;
 }
 
 function MilestoneRow({
   milestone,
   isDeleting,
+  isStatusUpdating,
   onEdit,
   onDelete,
+  onStatusToggle,
 }: MilestoneRowProps) {
   const progress = getProgress(milestone);
+  const isOpen = milestone.status === 'OPEN';
 
   return (
     <>
@@ -190,10 +197,10 @@ function MilestoneRow({
         <button
           type="button"
           className="milestone-row__action"
-          disabled
-          title="마일스톤 닫기 API 미구현"
+          disabled={isStatusUpdating}
+          onClick={onStatusToggle}
         >
-          닫기
+          {isStatusUpdating ? '변경 중…' : isOpen ? '닫기' : '열기'}
         </button>
         <button type="button" className="milestone-row__action" onClick={onEdit}>
           <img src={icon('edit')} alt="" width={16} height={16} />
@@ -223,20 +230,28 @@ export function MilestonePage() {
   } = useMilestoneListQuery();
   const createMilestone = useCreateMilestoneMutation();
   const updateMilestone = useUpdateMilestoneMutation();
+  const updateMilestoneStatus = useUpdateMilestoneStatusMutation();
   const deleteMilestone = useDeleteMilestoneMutation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null);
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<number | null>(null);
+  const [updatingStatusMilestoneId, setUpdatingStatusMilestoneId] = useState<number | null>(null);
 
   const milestones = data?.milestones ?? [];
   const milestoneCount = data?.milestoneCount ?? milestones.length;
   const openMilestoneCount = data?.openMilestoneCount ?? 0;
   const closedMilestoneCount = data?.closedMilestoneCount ?? 0;
   const sortedMilestones = useMemo(
-    () => [...milestones].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...milestones].sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'OPEN' ? -1 : 1;
+      return a.name.localeCompare(b.name, 'ko');
+    }),
     [milestones],
   );
-  const mutationError = createMilestone.error ?? updateMilestone.error ?? deleteMilestone.error;
+  const mutationError = createMilestone.error
+    ?? updateMilestone.error
+    ?? updateMilestoneStatus.error
+    ?? deleteMilestone.error;
 
   const handleDelete = (milestone: MilestoneResponse) => {
     if (!window.confirm(`'${milestone.name}' 마일스톤을 삭제하시겠습니까?`)) return;
@@ -244,6 +259,15 @@ export function MilestonePage() {
     deleteMilestone.mutate(milestone.id, {
       onSettled: () => setDeletingMilestoneId(null),
     });
+  };
+
+  const handleStatusToggle = (milestone: MilestoneResponse) => {
+    const nextStatus: MilestoneStatus = milestone.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+    setUpdatingStatusMilestoneId(milestone.id);
+    updateMilestoneStatus.mutate(
+      { id: milestone.id, body: { status: nextStatus } },
+      { onSettled: () => setUpdatingStatusMilestoneId(null) },
+    );
   };
 
   return (
@@ -332,11 +356,13 @@ export function MilestonePage() {
               <MilestoneRow
                 milestone={milestone}
                 isDeleting={deletingMilestoneId === milestone.id}
+                isStatusUpdating={updatingStatusMilestoneId === milestone.id}
                 onEdit={() => {
                   setIsCreateOpen(false);
                   setEditingMilestoneId(milestone.id);
                 }}
                 onDelete={() => handleDelete(milestone)}
+                onStatusToggle={() => handleStatusToggle(milestone)}
               />
             )}
           </div>

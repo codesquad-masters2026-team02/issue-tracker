@@ -5,6 +5,7 @@ import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
 import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
+import com.codesquad.issueTracker.milestone.dto.MilestoneStatusUpdateRequest;
 import jakarta.servlet.Servlet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,4 +43,12 @@ public class MilestoneService {
         Milestone savedMilestone = repo.save(targetMilestone);
         return new MilestoneResponse(savedMilestone);
     }
+
+    public MilestoneResponse changeMilestoneStatusById(Long id, MilestoneStatusUpdateRequest request){
+        Milestone targetMilestone = repo.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
+        targetMilestone.changeStatus(request.status());
+        Milestone savedMilestone = repo.save(targetMilestone);
+        return new MilestoneResponse(savedMilestone);
+    }
+
 }
