@@ -8,14 +8,13 @@ import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
-import jakarta.validation.Valid;
+import com.codesquad.issueTracker.issue.dto.UpdateIssueStatusRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,35 +46,18 @@ public class IssueService {
     }
 
     @Transactional
-    public void close(Long id) {
+    public void updateStatus(Long id, UpdateIssueStatusRequest request) {
         Issue issue = findById(id);
-        issue.close();
+        issue.changeStatus(request.status());
         issueRepository.save(issue);
     }
 
     @Transactional
-    public void reopen(Long id) {
-        Issue issue = findById(id);
-        issue.reopen();
-        issueRepository.save(issue);
-    }
-
-    @Transactional
-    public void bulkClose(BulkIssueRequest request) {
+    public void bulkUpdateStatus(BulkIssueRequest request) {
         List<Issue> issues = issueRepository.findAllById(request.issueIds());
 
         for (Issue issue : issues) {
-            issue.close();
-        }
-        issueRepository.saveAll(issues);
-    }
-
-    @Transactional
-    public void bulkReopen(BulkIssueRequest request) {
-        List<Issue> issues = issueRepository.findAllById(request.issueIds());
-
-        for (Issue issue : issues) {
-            issue.reopen();
+            issue.changeStatus(request.status());
         }
         issueRepository.saveAll(issues);
     }

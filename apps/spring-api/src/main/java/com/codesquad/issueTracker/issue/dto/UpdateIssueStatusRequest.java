@@ -1,12 +1,9 @@
 package com.codesquad.issueTracker.issue.dto;
 
 import com.codesquad.issueTracker.issue.IssueStatus;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
-public record BulkIssueRequest(
-        @NotEmpty List<Long> issueIds,
+public record UpdateIssueStatusRequest(
         @NotNull IssueStatus status
 ) {
 

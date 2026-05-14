@@ -4,6 +4,7 @@ import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.issue.dto.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
+import com.codesquad.issueTracker.issue.dto.UpdateIssueStatusRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -46,27 +47,20 @@ public class IssueController {
                 .body(ApiResponse.ok(created));
     }
 
-    @PostMapping("/{id}/close")
-    public ResponseEntity<ApiResponse<Void>> closeIssue(@PathVariable Long id) {
-        issueService.close(id);
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateIssueStatusRequest request
+    ) {
+        issueService.updateStatus(id,request);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 
-    @PostMapping("/{id}/reopen")
-    public ResponseEntity<ApiResponse<Void>> reopenIssue(@PathVariable Long id) {
-        issueService.reopen(id);
+
+    @PatchMapping("/status")
+    public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(@Valid @RequestBody BulkIssueRequest request) {
+        issueService.bulkUpdateStatus(request);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 
-    @PostMapping("/bulk-close")
-    public ResponseEntity<ApiResponse<Void>> closeIssues(@Valid @RequestBody BulkIssueRequest request) {
-        issueService.bulkClose(request);
-        return ResponseEntity.ok(ApiResponse.noContent());
-    }
-
-    @PostMapping("/bulk-reopen")
-    public ResponseEntity<ApiResponse<Void>> reopenIssues(@Valid @RequestBody BulkIssueRequest request) {
-        issueService.bulkReopen(request);
-        return ResponseEntity.ok(ApiResponse.noContent());
-    }
 }
