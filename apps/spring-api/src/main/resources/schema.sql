@@ -4,6 +4,16 @@ DROP TABLE IF EXISTS issue_labels;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS milestones;
 
+CREATE TABLE milestones(
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   name VARCHAR(100),
+   due_date DATE,
+   description TEXT,
+   open_issue_count INT,
+   closed_issue_count INT,
+   status VARCHAR(50),
+   is_deleted BOOLEAN
+);
 CREATE TABLE issues (
     issue_number BIGINT AUTO_INCREMENT PRIMARY KEY,
     author_id    BIGINT,
@@ -11,7 +21,7 @@ CREATE TABLE issues (
     status       VARCHAR(50),
     created_at   DATETIME,
     milestone_id BIGINT,
-    CONSTRAINT fk_milestone FOREIGN KEY (milestone_id) REFERENCES milestones(id);
+    CONSTRAINT fk_milestone FOREIGN KEY (milestone_id) REFERENCES milestones(id)
 );
 CREATE TABLE labels (
     label_id         BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -40,14 +50,3 @@ CREATE TABLE issue_labels
     FOREIGN KEY (label_id) REFERENCES labels (label_id) ON DELETE CASCADE
 );
 CREATE INDEX idx_label_id ON issue_labels (label_id);
-
-CREATE TABLE milestones(
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100),
-    due_date DATE,
-    description TEXT,
-    open_issue_count INT,
-    closed_issue_count INT,
-    status VARCHAR(50),
-    is_deleted BOOLEAN
-);

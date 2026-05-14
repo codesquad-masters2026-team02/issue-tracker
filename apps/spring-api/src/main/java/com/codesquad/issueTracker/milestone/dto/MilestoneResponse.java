@@ -1,4 +1,20 @@
 package com.codesquad.issueTracker.milestone.dto;
 
-public class MilestoneResponse {
+import com.codesquad.issueTracker.milestone.Milestone;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.time.LocalDate;
+
+public record MilestoneResponse(
+        Long id,
+        String name,
+        String description,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy. MM. dd")
+        LocalDate dueDate,
+        Integer openIssueCount,
+        Integer closedIssueCount
+) {
+    public MilestoneResponse (Milestone milestone){
+        this(milestone.getId(), milestone.getName(), milestone.getDescription(), milestone.getDueDate(), milestone.getOpenIssueCount(), milestone.getClosedIssueCount());
+    }
 }
