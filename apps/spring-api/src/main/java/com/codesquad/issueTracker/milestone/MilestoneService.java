@@ -24,7 +24,7 @@ public class MilestoneService {
     }
 
     public MilestoneListResponse getAllMilestones(){
-        List<Milestone> milestoneList = repo.findAll();
+        List<Milestone> milestoneList = repo.findAllActive();
         int openMilestoneCount = repo.getOpenMilestoneCount();
         int closedMilestoneCount = repo.getClosedMilestoneCount();
         return new MilestoneListResponse(milestoneList,openMilestoneCount,closedMilestoneCount);

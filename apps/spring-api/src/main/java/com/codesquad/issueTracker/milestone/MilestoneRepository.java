@@ -6,16 +6,21 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface MilestoneRepository extends ListCrudRepository<Milestone, Long> {
 
-    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('closed' , 'CLOSED')")
+    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('closed' , 'CLOSED') AND is_delted = false")
     int getClosedMilestoneCount();
 
-    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('open' , 'OPEN')")
+    @Query("SELECT COUNT(*) FROM MILESTONES WHERE status IN ('open' , 'OPEN') AND is_deleted = false")
     int getOpenMilestoneCount();
 
     @Modifying
-    @Query("DELETE FROM MILESTONES WHERE id = :id")
+    @Query("UPDATE MILESTONES SET is_deleted = true WHERE id = :id")
     int deleteMilestoneById(@Param("id") Long id);
+
+    @Query("SELECT * FROM MILESTONES WHERE is_deleted = false")
+    List<Milestone> findAllActive();
 }

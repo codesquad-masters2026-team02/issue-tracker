@@ -4,6 +4,7 @@ import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
 import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
+import com.codesquad.issueTracker.milestone.dto.MilestoneStatusUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +15,11 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/milestones")
 public class MilestoneController {
     private final MilestoneService service;
 
-    @PostMapping("/api/milestones")
+    @PostMapping
     public ResponseEntity<ApiResponse<MilestoneResponse>> postNewMilestone(@RequestBody MilestoneRequest request){
         MilestoneResponse newMilestone = service.postNewMilestone(request);
 
@@ -30,22 +32,26 @@ public class MilestoneController {
         return ResponseEntity.created(location).body(ApiResponse.ok(newMilestone));
     }
 
-    @GetMapping("/api/milestones")
+    @GetMapping
     public ResponseEntity<ApiResponse<MilestoneListResponse>> getMilestoneList(){
         MilestoneListResponse milestones = service.getAllMilestones();
         return ResponseEntity.ok(ApiResponse.ok(milestones));
     }
 
-    @DeleteMapping("/api/milestones/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteMilestone(@PathVariable Long id){
         service.deleteMilestoneById(id);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 
-    @PutMapping("/api/milestones/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestone(@PathVariable Long id, @RequestBody MilestoneRequest request){
         MilestoneResponse response = service.updateMilestoneById(id, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApiResponse<MilestoneResponse>> updateMilestoneStatus(@PathVariable Long id, @RequestBody MilestoneStatusUpdateRequest request){
+
+    }
 }
