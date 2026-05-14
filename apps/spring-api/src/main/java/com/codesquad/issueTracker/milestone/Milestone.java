@@ -22,4 +22,10 @@ public class Milestone {
     private Integer closedIssueCount;
     private String status;
     private Boolean isDeleted;
+
+    public void update(String name, LocalDate dueDate, String description){
+        this.name = name;
+        if(dueDate != null) this.dueDate = dueDate;
+        if((description != null) && !(description.isEmpty())) this.description = description;
+    }
 }

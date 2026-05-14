@@ -1,8 +1,11 @@
 package com.codesquad.issueTracker.milestone;
 
+import com.codesquad.issueTracker.common.exception.BusinessException;
+import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
 import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
 import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
+import jakarta.servlet.Servlet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,5 +28,18 @@ public class MilestoneService {
         int openMilestoneCount = repo.getOpenMilestoneCount();
         int closedMilestoneCount = repo.getClosedMilestoneCount();
         return new MilestoneListResponse(milestoneList,openMilestoneCount,closedMilestoneCount);
+    }
+
+    public void deleteMilestoneById(Long id){
+        if(repo.deleteMilestoneById(id) == 0){
+            throw new BusinessException(ErrorCode.MILESTONE_NOT_FOUND);
+        }
+    }
+
+    public MilestoneResponse updateMilestoneById(Long id, MilestoneRequest request){
+        Milestone targetMilestone = repo.findById(id).orElseThrow(()->new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
+        targetMilestone.update(request.name(),request.dueDate(),request.description());
+        Milestone savedMilestone = repo.save(targetMilestone);
+        return new MilestoneResponse(savedMilestone);
     }
 }
