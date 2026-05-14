@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Table(name = "MILESTONES")
 @Getter
@@ -16,7 +16,7 @@ public class Milestone {
     @Id
     private Long id;
     private String name;
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
     private String description;
     private Integer openIssueCount;
     private Integer closedIssueCount;
