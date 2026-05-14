@@ -27,4 +27,12 @@ public class Issue {
 
     @MappedCollection(idColumn = "ISSUE_NUMBER")
     private Set<IssueLabel> labels = new HashSet<>();
+
+    public void close() {
+        status = IssueStatus.CLOSED;
+    }
+
+    public void reopen() {
+        status = IssueStatus.OPEN;
+    }
 }

@@ -1,20 +1,21 @@
 package com.codesquad.issueTracker.issue;
 
-import com.codesquad.issueTracker.comment.Comment;
 import com.codesquad.issueTracker.comment.CommentService;
 import com.codesquad.issueTracker.comment.CommentType;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
+import com.codesquad.issueTracker.issue.dto.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
-import java.util.Set;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @Transactional(readOnly = true)
@@ -37,15 +38,51 @@ public class IssueService {
 
     public List<IssueResponse> getMainPageIssues(){
         List<Issue> issues = issueRepository.findAll();
-        return issues.stream().map(this::mapIssueToDto).collect(Collectors.toList());
-    }
-
-    private IssueResponse mapIssueToDto(Issue issue){
-        return IssueResponse.from(issue);
+        return issues.stream().map(IssueResponse::from).collect(Collectors.toList());
     }
 
     public IssueResponse findIssueById(Long id){
-        Issue issue = issueRepository.findById(id).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+        Issue issue = findById(id);
         return IssueResponse.from(issue);
     }
+
+    @Transactional
+    public void close(Long id) {
+        Issue issue = findById(id);
+        issue.close();
+        issueRepository.save(issue);
+    }
+
+    @Transactional
+    public void reopen(Long id) {
+        Issue issue = findById(id);
+        issue.reopen();
+        issueRepository.save(issue);
+    }
+
+    @Transactional
+    public void bulkClose(BulkIssueRequest request) {
+        List<Issue> issues = issueRepository.findAllById(request.issueIds());
+
+        for (Issue issue : issues) {
+            issue.close();
+        }
+        issueRepository.saveAll(issues);
+    }
+
+    @Transactional
+    public void bulkReopen(BulkIssueRequest request) {
+        List<Issue> issues = issueRepository.findAllById(request.issueIds());
+
+        for (Issue issue : issues) {
+            issue.reopen();
+        }
+        issueRepository.saveAll(issues);
+    }
+
+    private Issue findById(Long id) {
+        return issueRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+    }
+
 }
