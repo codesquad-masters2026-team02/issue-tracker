@@ -1,0 +1,290 @@
+.milestone-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.milestone-page__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.milestone-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--button-height-md);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background-color: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.milestone-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: var(--color-text-primary);
+  font-size: var(--text-button-size);
+  font-weight: var(--text-button-weight);
+}
+
+.milestone-tabs__item + .milestone-tabs__item {
+  border-left: 1px solid var(--color-border-default);
+}
+
+.milestone-tabs__item.is-active {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-link);
+}
+
+.milestone-page__error {
+  color: var(--color-text-error);
+  font-size: var(--text-caption-size);
+}
+
+.milestone-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-10) var(--space-8) var(--space-8);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+}
+
+.milestone-form__title {
+  color: var(--color-text-primary);
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+}
+
+.milestone-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.milestone-input {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-4);
+  background-color: var(--color-bg-input);
+  border: 1px solid transparent;
+  border-radius: var(--radius-input);
+}
+
+.milestone-input:focus-within {
+  background-color: var(--color-bg-input-focus);
+  border-color: var(--color-border-focus);
+}
+
+.milestone-input__prefix {
+  flex: 0 0 96px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-label-weight);
+}
+
+.milestone-input input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.milestone-input input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.milestone-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  white-space: nowrap;
+}
+
+.milestone-form__cancel,
+.milestone-form__submit {
+  min-width: 128px;
+}
+
+.milestone-form__cancel {
+  border-color: var(--color-interactive-primary);
+  color: var(--color-text-primary);
+}
+
+.milestone-form__submit[disabled] {
+  opacity: 1;
+}
+
+.milestone-list {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.milestone-list__head {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--color-border-default);
+  background-color: var(--color-bg-surface);
+}
+
+.milestone-list__counts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.milestone-list__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-size);
+  font-weight: var(--font-weight-medium);
+}
+
+.milestone-list__count.is-active {
+  color: var(--color-text-primary);
+}
+
+.milestone-list__status {
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+
+.milestone-list__status--error {
+  color: var(--color-text-error);
+}
+
+.milestone-row {
+  min-height: 96px;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 260px auto;
+  gap: var(--space-6);
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.milestone-row:last-child {
+  border-bottom: none;
+}
+
+.milestone-row:has(.milestone-form) {
+  display: block;
+  padding: 0;
+}
+
+.milestone-row:has(.milestone-form) .milestone-form {
+  border: none;
+  border-radius: 0;
+}
+
+.milestone-row__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.milestone-row__title,
+.milestone-row__due {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.milestone-row__title {
+  color: var(--color-text-primary);
+}
+
+.milestone-row__due,
+.milestone-row__description,
+.milestone-row__counts {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption-size);
+}
+
+.milestone-row__description {
+  overflow-wrap: anywhere;
+}
+
+.milestone-row__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.milestone-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.milestone-progress__track {
+  flex: 1;
+  height: var(--progress-height);
+  background-color: var(--color-milestone-track);
+  border-radius: var(--progress-radius);
+  overflow: hidden;
+}
+
+.milestone-progress__fill {
+  height: 100%;
+  background-color: var(--color-milestone-progress);
+  border-radius: var(--progress-radius);
+}
+
+.milestone-progress span {
+  width: 36px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-caption-size);
+  text-align: right;
+}
+
+.milestone-row__counts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.milestone-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  white-space: nowrap;
+}
+
+.milestone-row__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption-size);
+}
+
+.milestone-row__action--danger {
+  color: var(--color-text-error);
+}
+
+.milestone-row__action[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}

@@ -23,7 +23,7 @@ public class MilestoneController {
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("{/id}")
+                .path("/{id}")
                 .buildAndExpand(newMilestone.id())
                 .toUri();
 
