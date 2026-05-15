@@ -5,15 +5,16 @@ import com.codesquad.issueTracker.comment.CommentType;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
-import com.codesquad.issueTracker.issue.dto.BulkIssueRequest;
-import com.codesquad.issueTracker.issue.dto.IssueRequest;
-import com.codesquad.issueTracker.issue.dto.IssueResponse;
-import com.codesquad.issueTracker.issue.dto.UpdateIssueStatusRequest;
+import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
+import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
+import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
+import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
+import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -34,10 +35,12 @@ public class IssueService {
         return IssueResponse.from(saved);
     }
 
+    public FilteredIssuesResponse getIssues(IssueSearchCondition condition) {
+        List<Issue> issues = issueRepository.findByStatus(condition.status());
+        long openIssueCount = issueRepository.countByStatus(IssueStatus.OPEN);
+        long closedIssueCount = issueRepository.countByStatus(IssueStatus.CLOSED);
 
-    public List<IssueResponse> getMainPageIssues(){
-        List<Issue> issues = issueRepository.findAll();
-        return issues.stream().map(IssueResponse::from).collect(Collectors.toList());
+        return FilteredIssuesResponse.from(openIssueCount, closedIssueCount, issues);
     }
 
     public IssueResponse findIssueById(Long id){

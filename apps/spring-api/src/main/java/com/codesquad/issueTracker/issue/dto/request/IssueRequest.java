@@ -1,4 +1,4 @@
-package com.codesquad.issueTracker.issue.dto;
+package com.codesquad.issueTracker.issue.dto.request;
 
 import com.codesquad.issueTracker.issue.Issue;
 import com.codesquad.issueTracker.issue.IssueLabel;

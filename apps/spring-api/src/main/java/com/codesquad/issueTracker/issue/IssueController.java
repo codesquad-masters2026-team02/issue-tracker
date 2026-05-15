@@ -1,18 +1,18 @@
 package com.codesquad.issueTracker.issue;
 
 import com.codesquad.issueTracker.common.response.ApiResponse;
-import com.codesquad.issueTracker.issue.dto.BulkIssueRequest;
-import com.codesquad.issueTracker.issue.dto.IssueRequest;
-import com.codesquad.issueTracker.issue.dto.IssueResponse;
-import com.codesquad.issueTracker.issue.dto.UpdateIssueStatusRequest;
+import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
+import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
+import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
+import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
+import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/issues")
@@ -22,8 +22,8 @@ public class IssueController {
 
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<IssueResponse>>> mainPage() {
-        List<IssueResponse> responses = issueService.getMainPageIssues();
+    public ResponseEntity<ApiResponse<FilteredIssuesResponse>> mainPage(@ModelAttribute IssueSearchCondition condition) {
+        FilteredIssuesResponse responses = issueService.getIssues(condition);
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 
