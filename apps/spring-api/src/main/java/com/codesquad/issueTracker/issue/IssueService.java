@@ -11,6 +11,7 @@ import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
+import com.codesquad.issueTracker.milestone.MilestoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +24,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class IssueService {
     private final IssueRepository issueRepository;
     private final CommentService commentService;
+    private final MilestoneService milestoneService;
+
 
     @Transactional
     public IssueResponse create(IssueRequest request) {
         Issue issue = request.toEntity();
+
+        if(issue.getMilestoneId() != null && !milestoneService.findMilestoneExistenceById(issue.getMilestoneId())){
+            throw new BusinessException(ErrorCode.MILESTONE_NOT_FOUND);
+        }
+
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
