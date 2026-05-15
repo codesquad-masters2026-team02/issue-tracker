@@ -154,9 +154,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   font-size: var(--text-body-size);
   font-weight: var(--font-weight-medium);
+}
+
+.milestone-list__count:hover {
+  background-color: var(--color-bg-hover);
 }
 
 .milestone-list__count.is-active {

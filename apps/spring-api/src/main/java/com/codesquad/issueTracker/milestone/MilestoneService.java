@@ -2,10 +2,7 @@ package com.codesquad.issueTracker.milestone;
 
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
-import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
-import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
-import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
-import com.codesquad.issueTracker.milestone.dto.MilestoneStatusUpdateRequest;
+import com.codesquad.issueTracker.milestone.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +20,8 @@ public class MilestoneService {
         return new MilestoneResponse(savedMilestone);
     }
 
-    public MilestoneListResponse getAllMilestones(){
-        List<Milestone> milestoneList = repo.findAllActive();
+    public MilestoneListResponse getAllMilestonesByStatus(MilestoneStatus status){
+        List<Milestone> milestoneList = repo.findAllByStatus(status);
         int openMilestoneCount = repo.getOpenMilestoneCount();
         int closedMilestoneCount = repo.getClosedMilestoneCount();
         return new MilestoneListResponse(milestoneList,openMilestoneCount,closedMilestoneCount);

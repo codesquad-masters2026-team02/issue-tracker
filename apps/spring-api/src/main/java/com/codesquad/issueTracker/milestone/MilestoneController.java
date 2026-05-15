@@ -1,10 +1,7 @@
 package com.codesquad.issueTracker.milestone;
 
 import com.codesquad.issueTracker.common.response.ApiResponse;
-import com.codesquad.issueTracker.milestone.dto.MilestoneListResponse;
-import com.codesquad.issueTracker.milestone.dto.MilestoneRequest;
-import com.codesquad.issueTracker.milestone.dto.MilestoneResponse;
-import com.codesquad.issueTracker.milestone.dto.MilestoneStatusUpdateRequest;
+import com.codesquad.issueTracker.milestone.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +29,8 @@ public class MilestoneController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<MilestoneListResponse>> getMilestoneList(){
-        MilestoneListResponse milestones = service.getAllMilestones();
+    public ResponseEntity<ApiResponse<MilestoneListResponse>> getMilestoneList(@RequestParam(defaultValue = "OPEN") MilestoneStatus status){
+        MilestoneListResponse milestones = service.getAllMilestonesByStatus(status);
         return ResponseEntity.ok(ApiResponse.ok(milestones));
     }
 

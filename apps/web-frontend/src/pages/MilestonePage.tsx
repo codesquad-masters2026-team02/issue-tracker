@@ -222,12 +222,13 @@ function MilestoneRow({
 
 export function MilestonePage() {
   const { data: labels = [] } = useLabelListQuery();
+  const [selectedStatus, setSelectedStatus] = useState<MilestoneStatus>('OPEN');
   const {
     data,
     isLoading,
     isError,
     error,
-  } = useMilestoneListQuery();
+  } = useMilestoneListQuery(selectedStatus);
   const createMilestone = useCreateMilestoneMutation();
   const updateMilestone = useUpdateMilestoneMutation();
   const updateMilestoneStatus = useUpdateMilestoneStatusMutation();
@@ -242,10 +243,7 @@ export function MilestonePage() {
   const openMilestoneCount = data?.openMilestoneCount ?? 0;
   const closedMilestoneCount = data?.closedMilestoneCount ?? 0;
   const sortedMilestones = useMemo(
-    () => [...milestones].sort((a, b) => {
-      if (a.status !== b.status) return a.status === 'OPEN' ? -1 : 1;
-      return a.name.localeCompare(b.name, 'ko');
-    }),
+    () => [...milestones].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
     [milestones],
   );
   const mutationError = createMilestone.error
@@ -317,14 +315,24 @@ export function MilestonePage() {
       <section className="milestone-list" aria-label="마일스톤 목록">
         <header className="milestone-list__head">
           <div className="milestone-list__counts" aria-label="마일스톤 상태별 개수">
-            <span className="milestone-list__count is-active">
+            <button
+              type="button"
+              className={`milestone-list__count ${selectedStatus === 'OPEN' ? 'is-active' : ''}`}
+              aria-pressed={selectedStatus === 'OPEN'}
+              onClick={() => setSelectedStatus('OPEN')}
+            >
               <img src={icon('milestone')} alt="" width={16} height={16} />
               열린 마일스톤({openMilestoneCount})
-            </span>
-            <span className="milestone-list__count">
+            </button>
+            <button
+              type="button"
+              className={`milestone-list__count ${selectedStatus === 'CLOSED' ? 'is-active' : ''}`}
+              aria-pressed={selectedStatus === 'CLOSED'}
+              onClick={() => setSelectedStatus('CLOSED')}
+            >
               <img src={icon('archive')} alt="" width={16} height={16} />
               닫힌 마일스톤({closedMilestoneCount})
-            </span>
+            </button>
           </div>
         </header>
         {isLoading && <p className="milestone-list__status">불러오는 중…</p>}

@@ -165,8 +165,11 @@ async function deleteLabel(id: number): Promise<void> {
   }
 }
 
-async function fetchMilestones(): Promise<MilestoneListResponse> {
-  const { data } = await api.get<ApiResponse<MilestoneListResponse>>('/api/milestones');
+async function fetchMilestones(status: MilestoneStatus): Promise<MilestoneListResponse> {
+  const { data } = await api.get<ApiResponse<MilestoneListResponse>>(
+    '/api/milestones',
+    { params: { status } },
+  );
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '마일스톤 목록을 불러오지 못했습니다.');
   }
@@ -259,7 +262,7 @@ export const labelKeys = {
 
 export const milestoneKeys = {
   all: ['milestones'] as const,
-  list: () => [...milestoneKeys.all, 'list'] as const,
+  list: (status: MilestoneStatus) => [...milestoneKeys.all, 'list', status] as const,
 };
 
 export function useIssueListQuery() {
@@ -326,10 +329,10 @@ export function useDeleteLabelMutation() {
   });
 }
 
-export function useMilestoneListQuery() {
+export function useMilestoneListQuery(status: MilestoneStatus = 'OPEN') {
   return useQuery({
-    queryKey: milestoneKeys.list(),
-    queryFn: fetchMilestones,
+    queryKey: milestoneKeys.list(status),
+    queryFn: () => fetchMilestones(status),
     staleTime: Infinity,
     gcTime: 1000 * 60 * 30,
   });
