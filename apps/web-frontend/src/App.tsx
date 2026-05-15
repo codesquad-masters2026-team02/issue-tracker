@@ -4,6 +4,7 @@ import { IssueListPage } from './pages/IssueListPage';
 import { IssueCreatePage } from './pages/IssueCreatePage';
 import { IssueDetailPage } from './pages/IssueDetailPage';
 import { LabelPage } from './pages/LabelPage';
+import { MilestonePage } from './pages/MilestonePage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/issues/new" element={<IssueCreatePage />} />
         <Route path="/issues/:id" element={<IssueDetailPage />} />
         <Route path="/labels" element={<LabelPage />} />
+        <Route path="/milestones" element={<MilestonePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -50,6 +50,35 @@ export interface LabelsResponse {
   labels: LabelResponse[];
 }
 
+export interface MilestoneRequest {
+  name: string;
+  description?: string;
+  dueDate?: string;
+}
+
+export type MilestoneStatus = 'OPEN' | 'CLOSED';
+
+export interface MilestoneStatusUpdateRequest {
+  status: MilestoneStatus;
+}
+
+export interface MilestoneResponse {
+  id: number;
+  name: string;
+  description?: string;
+  dueDate?: string | null;
+  status: MilestoneStatus;
+  openIssueCount: number;
+  closedIssueCount: number;
+}
+
+export interface MilestoneListResponse {
+  milestoneCount: number;
+  openMilestoneCount: number;
+  closedMilestoneCount: number;
+  milestones: MilestoneResponse[];
+}
+
 export type CommentType = 'ISSUE_BODY' | 'DISCUSSION';
 
 export interface CommentRequest {
@@ -136,6 +165,57 @@ async function deleteLabel(id: number): Promise<void> {
   }
 }
 
+async function fetchMilestones(status: MilestoneStatus): Promise<MilestoneListResponse> {
+  const { data } = await api.get<ApiResponse<MilestoneListResponse>>(
+    '/api/milestones',
+    { params: { status } },
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '마일스톤 목록을 불러오지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function createMilestone(body: MilestoneRequest): Promise<MilestoneResponse> {
+  const { data } = await api.post<ApiResponse<MilestoneResponse>>('/api/milestones', body);
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '마일스톤을 생성하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function updateMilestone(
+  id: number,
+  body: MilestoneRequest,
+): Promise<MilestoneResponse> {
+  const { data } = await api.put<ApiResponse<MilestoneResponse>>(`/api/milestones/${id}`, body);
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '마일스톤을 수정하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function updateMilestoneStatus(
+  id: number,
+  body: MilestoneStatusUpdateRequest,
+): Promise<MilestoneResponse> {
+  const { data } = await api.patch<ApiResponse<MilestoneResponse>>(
+    `/api/milestones/${id}`,
+    body,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '마일스톤 상태를 수정하지 못했습니다.');
+  }
+  return data.data;
+}
+
+async function deleteMilestone(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<void>>(`/api/milestones/${id}`);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '마일스톤을 삭제하지 못했습니다.');
+  }
+}
+
 async function fetchIssueComments(issueNumber: number): Promise<CommentListResponse> {
   const { data } = await api.get<ApiResponse<CommentListResponse>>(
     `/api/issues/${issueNumber}/comments`,
@@ -178,6 +258,11 @@ export const issueKeys = {
 export const labelKeys = {
   all: ['labels'] as const,
   list: () => [...labelKeys.all, 'list'] as const,
+};
+
+export const milestoneKeys = {
+  all: ['milestones'] as const,
+  list: (status: MilestoneStatus) => [...milestoneKeys.all, 'list', status] as const,
 };
 
 export function useIssueListQuery() {
@@ -240,6 +325,59 @@ export function useDeleteLabelMutation() {
     mutationFn: deleteLabel,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: labelKeys.all });
+    },
+  });
+}
+
+export function useMilestoneListQuery(status: MilestoneStatus = 'OPEN') {
+  return useQuery({
+    queryKey: milestoneKeys.list(status),
+    queryFn: () => fetchMilestones(status),
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
+  });
+}
+
+export function useCreateMilestoneMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createMilestone,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useUpdateMilestoneMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: MilestoneRequest }) => (
+      updateMilestone(id, body)
+    ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useUpdateMilestoneStatusMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: MilestoneStatusUpdateRequest }) => (
+      updateMilestoneStatus(id, body)
+    ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useDeleteMilestoneMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteMilestone,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
     },
   });
 }

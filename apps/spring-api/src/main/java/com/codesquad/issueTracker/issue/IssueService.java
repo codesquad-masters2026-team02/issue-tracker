@@ -9,6 +9,8 @@ import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.IssueResponse;
 import java.util.Set;
+
+import com.codesquad.issueTracker.milestone.MilestoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class IssueService {
     private final IssueRepository issueRepository;
     private final CommentService commentService;
+    private final MilestoneService milestoneService;
 
     @Transactional
     public IssueResponse create(IssueRequest request) {
         Issue issue = request.toEntity();
+
+        if(!milestoneService.findMilestoneExistenceById(issue.getMilestoneId())){
+
+        }
+
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());

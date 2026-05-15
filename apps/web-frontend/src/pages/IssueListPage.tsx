@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   useIssueListQuery,
   useLabelListQuery,
+  useMilestoneListQuery,
   type IssueResponse,
 } from '../lib/api';
 import { icon } from '../lib/icons';
@@ -25,8 +26,10 @@ type Tab = 'OPEN' | 'CLOSED';
 export function IssueListPage() {
   const { data, isLoading, isError, error } = useIssueListQuery();
   const { data: labels = [] } = useLabelListQuery();
+  const { data: milestoneList } = useMilestoneListQuery();
   const [tab, setTab] = useState<Tab>('OPEN');
   const [keyword, setKeyword] = useState('is:issue is:open');
+  const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
 
   const { openCount, closedCount, rows } = useMemo(() => {
     const all: IssueResponse[] = data ?? [];
@@ -69,10 +72,10 @@ export function IssueListPage() {
               레이블({labels.length})
             </Link>
             <div className="chip-group__divider" />
-            <button type="button" className="chip-group__item">
+            <Link to="/milestones" className="chip-group__item">
               <img src={icon('milestone')} alt="" width={16} height={16} />
-              마일스톤(0)
-            </button>
+              마일스톤({milestoneCount})
+            </Link>
           </div>
           <Link to="/issues/new" className="btn btn--primary">
             <img src={icon('plus')} alt="" width={16} height={16} />

@@ -5,6 +5,7 @@ import {
   useCreateLabelMutation,
   useDeleteLabelMutation,
   useLabelListQuery,
+  useMilestoneListQuery,
   useUpdateLabelMutation,
   type LabelRequest,
   type LabelResponse,
@@ -174,6 +175,7 @@ function toFormValue(label: LabelResponse): LabelRequest {
 
 export function LabelPage() {
   const { data: labels = [], isLoading, isError, error } = useLabelListQuery();
+  const { data: milestoneList } = useMilestoneListQuery();
   const createLabel = useCreateLabelMutation();
   const updateLabel = useUpdateLabelMutation();
   const deleteLabel = useDeleteLabelMutation();
@@ -184,6 +186,7 @@ export function LabelPage() {
     () => [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
     [labels],
   );
+  const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
   const mutationError = createLabel.error ?? updateLabel.error ?? deleteLabel.error;
 
   const handleDelete = (label: LabelResponse) => {
@@ -201,7 +204,7 @@ export function LabelPage() {
           </button>
           <Link to="/milestones" className="label-tabs__item">
             <img src={icon('milestone')} alt="" width={16} height={16} />
-            마일스톤(0)
+            마일스톤({milestoneCount})
           </Link>
         </div>
         <button
