@@ -5,6 +5,7 @@ import {
   useDeleteCommentMutation,
   useIssueCommentsQuery,
   useIssueDetailQuery,
+  useUpdateIssueStatusMutation,
   type CommentResponse,
 } from '../lib/api';
 import { icon } from '../lib/icons';
@@ -102,6 +103,11 @@ export function IssueDetailPage() {
     isPending: isDeletePending,
     error: deleteCommentError,
   } = useDeleteCommentMutation(id);
+  const {
+    mutate: updateIssueStatus,
+    isPending: isStatusPending,
+    error: updateStatusError,
+  } = useUpdateIssueStatusMutation(id);
   const [newComment, setNewComment] = useState('');
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
 
@@ -146,6 +152,9 @@ export function IssueDetailPage() {
   if (!issue) return null;
 
   const isOpen = issue.status === 'OPEN';
+  const handleStatusToggle = () => {
+    updateIssueStatus({ status: isOpen ? 'CLOSED' : 'OPEN' });
+  };
 
   return (
     <div className="issue-detail">
@@ -160,17 +169,21 @@ export function IssueDetailPage() {
             <img src={icon('edit')} alt="" width={16} height={16} />
             제목 편집
           </button>
-          {/* TODO: 상태 변경 API 추가되면 onClick 으로 toggle */}
-          <button type="button" className="btn btn--outline" disabled title="상태 변경 API 미구현">
+          <button
+            type="button"
+            className="btn btn--outline"
+            disabled={isStatusPending}
+            onClick={handleStatusToggle}
+          >
             {isOpen ? (
               <>
                 <img src={icon('archive')} alt="" width={16} height={16} />
-                이슈 닫기
+                {isStatusPending ? '닫는 중…' : '이슈 닫기'}
               </>
             ) : (
               <>
                 <img src={icon('alertCircle')} alt="" width={16} height={16} />
-                이슈 열기
+                {isStatusPending ? '여는 중…' : '이슈 열기'}
               </>
             )}
           </button>
@@ -195,6 +208,11 @@ export function IssueDetailPage() {
           코멘트 {discussionComments.length}개
         </span>
       </div>
+      {updateStatusError && (
+        <p className="issue-detail__status issue-detail__status--error">
+          {(updateStatusError as Error).message}
+        </p>
+      )}
       <hr className="issue-detail__rule" />
 
       <div className="issue-detail__body">

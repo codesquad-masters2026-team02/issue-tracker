@@ -21,12 +21,24 @@ export interface IssueResponse {
   title: string;
   status: IssueStatus;
   createdAt: string; // ISO date-time
+  milestoneId?: number | null;
 }
 
 export interface IssueRequest {
   title: string;
   content: string;
   labelIds?: number[];
+  milestoneId?: number;
+}
+
+export interface UpdateIssueStatusRequest {
+  status: IssueStatus;
+}
+
+export interface FilteredIssuesResponse {
+  openIssueCount: number;
+  closedIssueCount: number;
+  issues: IssueResponse[];
 }
 
 export type LabelTextColor = 'DARK' | 'LIGHT';
@@ -110,8 +122,11 @@ export interface ApiResponse<T> {
 }
 
 // ----- Endpoints -----
-async function fetchIssues(): Promise<IssueResponse[]> {
-  const { data } = await api.get<ApiResponse<IssueResponse[]>>('/api/issues');
+async function fetchIssues(status: IssueStatus): Promise<FilteredIssuesResponse> {
+  const { data } = await api.get<ApiResponse<FilteredIssuesResponse>>(
+    '/api/issues',
+    { params: { status } },
+  );
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '이슈 목록을 불러오지 못했습니다.');
   }
@@ -132,6 +147,16 @@ async function createIssue(body: IssueRequest): Promise<IssueResponse> {
     throw new Error(data.error?.message ?? '이슈를 생성하지 못했습니다.');
   }
   return data.data;
+}
+
+async function updateIssueStatus(
+  id: number,
+  body: UpdateIssueStatusRequest,
+): Promise<void> {
+  const { data } = await api.patch<ApiResponse<void>>(`/api/issues/${id}`, body);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '이슈 상태를 수정하지 못했습니다.');
+  }
 }
 
 async function fetchLabels(): Promise<LabelResponse[]> {
@@ -250,7 +275,7 @@ async function deleteComment(commentId: number): Promise<void> {
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
-  list: () => [...issueKeys.all, 'list'] as const,
+  list: (status: IssueStatus) => [...issueKeys.all, 'list', status] as const,
   detail: (id: number) => [...issueKeys.all, 'detail', id] as const,
   comments: (id: number) => [...issueKeys.detail(id), 'comments'] as const,
 };
@@ -265,10 +290,10 @@ export const milestoneKeys = {
   list: (status: MilestoneStatus) => [...milestoneKeys.all, 'list', status] as const,
 };
 
-export function useIssueListQuery() {
+export function useIssueListQuery(status: IssueStatus = 'OPEN') {
   return useQuery({
-    queryKey: issueKeys.list(),
-    queryFn: fetchIssues,
+    queryKey: issueKeys.list(status),
+    queryFn: () => fetchIssues(status),
   });
 }
 
@@ -285,6 +310,17 @@ export function useCreateIssueMutation() {
   return useMutation({
     mutationFn: createIssue,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useUpdateIssueStatusMutation(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateIssueStatusRequest) => updateIssueStatus(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(id) });
       qc.invalidateQueries({ queryKey: issueKeys.all });
     },
   });

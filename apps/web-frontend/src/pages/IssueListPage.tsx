@@ -4,7 +4,6 @@ import {
   useIssueListQuery,
   useLabelListQuery,
   useMilestoneListQuery,
-  type IssueResponse,
 } from '../lib/api';
 import { icon } from '../lib/icons';
 import './IssueListPage.css';
@@ -24,24 +23,22 @@ function formatRelative(iso: string) {
 type Tab = 'OPEN' | 'CLOSED';
 
 export function IssueListPage() {
-  const { data, isLoading, isError, error } = useIssueListQuery();
-  const { data: labels = [] } = useLabelListQuery();
-  const { data: milestoneList } = useMilestoneListQuery();
   const [tab, setTab] = useState<Tab>('OPEN');
   const [keyword, setKeyword] = useState('is:issue is:open');
+  const { data, isLoading, isError, error } = useIssueListQuery(tab);
+  const { data: labels = [] } = useLabelListQuery();
+  const { data: milestoneList } = useMilestoneListQuery();
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
+  const openCount = data?.openIssueCount ?? 0;
+  const closedCount = data?.closedIssueCount ?? 0;
 
-  const { openCount, closedCount, rows } = useMemo(() => {
-    const all: IssueResponse[] = data ?? [];
-    const open = all.filter((i) => i.status === 'OPEN');
-    const closed = all.filter((i) => i.status === 'CLOSED');
-    const base = tab === 'OPEN' ? open : closed;
+  const rows = useMemo(() => {
+    const base = data?.issues ?? [];
     const kw = keyword.replace(/is:issue|is:open|is:closed/gi, '').trim().toLowerCase();
-    const filtered = kw
+    return kw
       ? base.filter((i) => i.title.toLowerCase().includes(kw))
       : base;
-    return { openCount: open.length, closedCount: closed.length, rows: filtered };
-  }, [data, tab, keyword]);
+  }, [data, keyword]);
 
   return (
     <div className="issue-list">
