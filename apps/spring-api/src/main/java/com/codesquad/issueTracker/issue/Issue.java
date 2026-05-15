@@ -27,4 +27,8 @@ public class Issue {
 
     @MappedCollection(idColumn = "ISSUE_NUMBER")
     private Set<IssueLabel> labels = new HashSet<>();
+
+    public void changeStatus(IssueStatus status) {
+        this.status = status;
+    }
 }

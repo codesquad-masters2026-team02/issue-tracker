@@ -1,21 +1,20 @@
 package com.codesquad.issueTracker.issue;
 
-import com.codesquad.issueTracker.comment.Comment;
 import com.codesquad.issueTracker.comment.CommentService;
 import com.codesquad.issueTracker.comment.CommentType;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
-import com.codesquad.issueTracker.issue.dto.IssueRequest;
-import com.codesquad.issueTracker.issue.dto.IssueResponse;
-import java.util.Set;
-
-import com.codesquad.issueTracker.milestone.MilestoneService;
+import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
+import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
+import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
+import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
+import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,16 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class IssueService {
     private final IssueRepository issueRepository;
     private final CommentService commentService;
-    private final MilestoneService milestoneService;
 
     @Transactional
     public IssueResponse create(IssueRequest request) {
         Issue issue = request.toEntity();
-
-        if(!milestoneService.findMilestoneExistenceById(issue.getMilestoneId())){
-
-        }
-
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
@@ -42,18 +35,39 @@ public class IssueService {
         return IssueResponse.from(saved);
     }
 
+    public FilteredIssuesResponse getIssues(IssueSearchCondition condition) {
+        List<Issue> issues = issueRepository.findByStatus(condition.status());
+        long openIssueCount = issueRepository.countByStatus(IssueStatus.OPEN);
+        long closedIssueCount = issueRepository.countByStatus(IssueStatus.CLOSED);
 
-    public List<IssueResponse> getMainPageIssues(){
-        List<Issue> issues = issueRepository.findAll();
-        return issues.stream().map(this::mapIssueToDto).collect(Collectors.toList());
-    }
-
-    private IssueResponse mapIssueToDto(Issue issue){
-        return IssueResponse.from(issue);
+        return FilteredIssuesResponse.from(openIssueCount, closedIssueCount, issues);
     }
 
     public IssueResponse findIssueById(Long id){
-        Issue issue = issueRepository.findById(id).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+        Issue issue = findById(id);
         return IssueResponse.from(issue);
     }
+
+    @Transactional
+    public void updateStatus(Long id, UpdateIssueStatusRequest request) {
+        Issue issue = findById(id);
+        issue.changeStatus(request.status());
+        issueRepository.save(issue);
+    }
+
+    @Transactional
+    public void bulkUpdateStatus(BulkIssueRequest request) {
+        List<Issue> issues = issueRepository.findAllById(request.issueIds());
+
+        for (Issue issue : issues) {
+            issue.changeStatus(request.status());
+        }
+        issueRepository.saveAll(issues);
+    }
+
+    private Issue findById(Long id) {
+        return issueRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+    }
+
 }

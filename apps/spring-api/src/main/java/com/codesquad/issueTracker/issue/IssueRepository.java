@@ -1,15 +1,12 @@
 package com.codesquad.issueTracker.issue;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.NonNull;
+import java.util.List;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface IssueRepository extends CrudRepository<Issue, Long> {
+public interface IssueRepository extends ListCrudRepository<Issue, Long> {
+    List<Issue> findByStatus(IssueStatus status);
 
-    @NonNull
-    @Override
-    public List<Issue> findAll();
+    long countByStatus(IssueStatus status);
 }
