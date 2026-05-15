@@ -10,10 +10,11 @@ import java.util.stream.Collectors;
 public record IssueRequest(
         String title,
         String content,
-        List<Long> labelIds
+        List<Long> labelIds,
+        Long milestoneId
 ) {
     public Issue toEntity() {
-        return new Issue(null, null, title, IssueStatus.OPEN, null, null, toIssueLabels());
+        return new Issue(null, null, title, IssueStatus.OPEN, null, milestoneId, toIssueLabels());
     }
 
     private Set<IssueLabel> toIssueLabels() {
