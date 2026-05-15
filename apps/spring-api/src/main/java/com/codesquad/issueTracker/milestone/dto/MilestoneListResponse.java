@@ -11,9 +11,9 @@ public record MilestoneListResponse(
         List<MilestoneResponse> milestones
 ) {
     public MilestoneListResponse(List<Milestone> milestoneList, int openMilestoneCount, int closedMilestoneCount){
-        this((Integer) (openMilestoneCount + closedMilestoneCount),
-                (Integer)openMilestoneCount,
-                (Integer)closedMilestoneCount,
+        this( (openMilestoneCount + closedMilestoneCount),
+                openMilestoneCount,
+                closedMilestoneCount,
                 milestoneList.stream().map(MilestoneResponse::new).toList());
     }
 }

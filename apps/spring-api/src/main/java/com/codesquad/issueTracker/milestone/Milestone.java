@@ -25,8 +25,8 @@ public class Milestone {
 
     public void update(String name, LocalDate dueDate, String description){
         this.name = name;
-        if(dueDate != null) this.dueDate = dueDate;
-        if((description != null) && !(description.isEmpty())) this.description = description;
+        this.dueDate = dueDate;
+        this.description = description;
     }
 
     public void changeStatus(MilestoneStatus status){
