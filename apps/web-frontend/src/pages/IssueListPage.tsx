@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   useBulkUpdateIssueStatusMutation,
   useIssueListQuery,
@@ -25,8 +25,17 @@ function formatRelative(iso: string) {
 
 type Tab = IssueStatus;
 
+function toTab(value: string | null): Tab {
+  return value === 'CLOSED' ? 'CLOSED' : 'OPEN';
+}
+
+function toKeyword(status: Tab) {
+  return `is:issue ${status === 'OPEN' ? 'is:open' : 'is:closed'}`;
+}
+
 export function IssueListPage() {
-  const [tab, setTab] = useState<Tab>('OPEN');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = toTab(searchParams.get('status'));
   const { data, isLoading, isError, error } = useIssueListQuery(tab);
   const { data: labels = [] } = useLabelListQuery();
   const { data: milestoneList } = useMilestoneListQuery();
@@ -35,7 +44,7 @@ export function IssueListPage() {
     isPending: isBulkStatusPending,
     error: bulkStatusError,
   } = useBulkUpdateIssueStatusMutation();
-  const [keyword, setKeyword] = useState('is:issue is:open');
+  const [keyword, setKeyword] = useState(() => toKeyword(tab));
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -77,8 +86,8 @@ export function IssueListPage() {
   }, [visibleIssueIds]);
 
   const handleTabClick = (nextTab: Tab) => {
-    setTab(nextTab);
-    setKeyword(`is:issue ${nextTab === 'OPEN' ? 'is:open' : 'is:closed'}`);
+    setSearchParams(nextTab === 'OPEN' ? {} : { status: 'CLOSED' });
+    setKeyword(toKeyword(nextTab));
     setSelectedIssueIds(new Set());
     setIsStatusMenuOpen(false);
   };

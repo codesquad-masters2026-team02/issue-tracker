@@ -173,7 +173,11 @@
   cursor: not-allowed;
 }
 
-.issue-table__body { list-style: none; }
+.issue-table__body {
+  display: block;
+  list-style: none;
+  background-color: var(--color-bg-surface);
+}
 .issue-table__empty {
   padding: var(--space-12) var(--space-6);
   text-align: center;
