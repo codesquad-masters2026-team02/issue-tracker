@@ -3,7 +3,7 @@ package com.codesquad.issueTracker.issue;
 import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
-import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
@@ -22,8 +22,8 @@ public class IssueController {
 
 
     @GetMapping
-    public ResponseEntity<ApiResponse<FilteredIssuesResponse>> mainPage(@ModelAttribute IssueSearchCondition condition) {
-        FilteredIssuesResponse responses = issueService.getIssues(condition);
+    public ResponseEntity<ApiResponse<IssueSearchResponse>> mainPage(@ModelAttribute IssueSearchCondition condition) {
+        IssueSearchResponse responses = issueService.getIssues(condition);
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 

@@ -7,7 +7,7 @@ import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
-import com.codesquad.issueTracker.issue.dto.response.FilteredIssuesResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
@@ -43,12 +43,12 @@ public class IssueService {
         return IssueResponse.from(saved);
     }
 
-    public FilteredIssuesResponse getIssues(IssueSearchCondition condition) {
+    public IssueSearchResponse getIssues(IssueSearchCondition condition) {
         List<Issue> issues = issueRepository.findByStatus(condition.status());
         long openIssueCount = issueRepository.countByStatus(IssueStatus.OPEN);
         long closedIssueCount = issueRepository.countByStatus(IssueStatus.CLOSED);
 
-        return FilteredIssuesResponse.from(openIssueCount, closedIssueCount, issues);
+        return IssueSearchResponse.from(openIssueCount, closedIssueCount, issues);
     }
 
     public IssueResponse findIssueById(Long id){

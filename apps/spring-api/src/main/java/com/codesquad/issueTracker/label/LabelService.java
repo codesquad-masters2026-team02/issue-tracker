@@ -3,8 +3,8 @@ package com.codesquad.issueTracker.label;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.label.dto.LabelRequest;
-import com.codesquad.issueTracker.label.dto.LabelResponse;
-import com.codesquad.issueTracker.label.dto.LabelsResponse;
+import com.codesquad.issueTracker.label.dto.LabelDetailResponse;
+import com.codesquad.issueTracker.label.dto.LabelListResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,30 +17,30 @@ public class LabelService {
     private final LabelRepository labelRepository;
 
     @Transactional(readOnly = true)
-    public LabelsResponse findLabels() {
+    public LabelListResponse findLabels() {
         List<Label> labels = labelRepository.findAll();
-        return LabelsResponse.from(labels);
+        return LabelListResponse.from(labels);
     }
 
     @Transactional(readOnly = true)
-    public LabelResponse findLabelById(Long id) {
+    public LabelDetailResponse findLabelById(Long id) {
         Label label = findById(id);
-        return LabelResponse.from(label);
+        return LabelDetailResponse.from(label);
     }
 
-    public LabelResponse create(LabelRequest request) {
+    public LabelDetailResponse create(LabelRequest request) {
         Label label = request.toEntity();
         Label savedLabel = labelRepository.save(label);
-        return LabelResponse.from(savedLabel);
+        return LabelDetailResponse.from(savedLabel);
     }
 
-    public LabelResponse update(Long id, LabelRequest request) {
+    public LabelDetailResponse update(Long id, LabelRequest request) {
         Label label = findById(id);
         label.update(request.name(), request.description(), request.backgroundColor(), request.textColor());
 
         Label savedlabel = labelRepository.save(label);
 
-        return LabelResponse.from(savedlabel);
+        return LabelDetailResponse.from(savedlabel);
     }
 
     public void delete(Long id) {

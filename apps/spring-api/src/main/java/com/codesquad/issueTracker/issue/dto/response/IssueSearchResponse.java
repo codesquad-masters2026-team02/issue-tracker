@@ -3,12 +3,12 @@ package com.codesquad.issueTracker.issue.dto.response;
 import com.codesquad.issueTracker.issue.Issue;
 import java.util.List;
 
-public record FilteredIssuesResponse(
+public record IssueSearchResponse(
         long openIssueCount,
         long closedIssueCount,
         List<IssueResponse> issues
 ) {
-    public static FilteredIssuesResponse from(
+    public static IssueSearchResponse from(
             long openIssueCount, long closedIssueCount,
             List<Issue> issues
     ) {
@@ -16,6 +16,6 @@ public record FilteredIssuesResponse(
                 .map(IssueResponse::from)
                 .toList();
 
-        return new FilteredIssuesResponse(openIssueCount, closedIssueCount, list);
+        return new IssueSearchResponse(openIssueCount, closedIssueCount, list);
     }
 }
