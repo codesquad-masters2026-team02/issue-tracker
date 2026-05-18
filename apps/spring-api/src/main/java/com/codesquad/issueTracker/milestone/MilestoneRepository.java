@@ -34,4 +34,7 @@ public interface MilestoneRepository extends ListCrudRepository<Milestone, Long>
 
     @Query("SELECT * FROM MILESTONES WHERE status = :status AND is_deleted = false")
     List<Milestone> findAllByStatus(@Param("status") MilestoneStatus status);
+
+    @Query("SELECT * FROM MILESTONES WHERE id IN (:ids) AND is_deleted = false")
+    List<Milestone> findActiveAllByIds(@Param("ids") Iterable<Long> ids);
 }

@@ -3,8 +3,9 @@ package com.codesquad.issueTracker.issue;
 import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
+import com.codesquad.issueTracker.issue.dto.response.IssueDetailResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
-import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
+import com.codesquad.issueTracker.issue.dto.response.IssueSummaryResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import jakarta.validation.Valid;
@@ -28,13 +29,13 @@ public class IssueController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<IssueResponse>> issueDetail(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<IssueDetailResponse>> issueDetail(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(issueService.findIssueById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<IssueResponse>> createIssue(@RequestBody IssueRequest request) {
-        IssueResponse created = issueService.create(request);
+    public ResponseEntity<ApiResponse<IssueDetailResponse>> createIssue(@RequestBody IssueRequest request) {
+        IssueDetailResponse created = issueService.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
