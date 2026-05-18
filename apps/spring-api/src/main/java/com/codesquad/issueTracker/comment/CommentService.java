@@ -19,25 +19,25 @@ public class CommentService {
     private final CommentRepository commentRepo;
     private final IssueRepository issueRepository;
 
-    public CommentResponse postComment(Long issueNumber, CommentRequest request, CommentType type){
-        if(!issueRepository.existsById(issueNumber)){
+    public CommentResponse postComment(Long issueId, CommentRequest request, CommentType type){
+        if(!issueRepository.existsById(issueId)){
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
         else{
-            Comment newComment = request.toEntity(issueNumber, type);
+            Comment newComment = request.toEntity(issueId, type);
             Comment savedComment = commentRepo.save(newComment);
             return new CommentResponse(savedComment);
         }
     }
 
-    public CommentListResponse getCommentListForIssue(Long issueNumber){
-        if(!issueRepository.existsById(issueNumber)){
+    public CommentListResponse getCommentListForIssue(Long issueId){
+        if(!issueRepository.existsById(issueId)){
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
         else{
-            List<Comment> comments = commentRepo.findAllByIssueNumberOrderByCreatedAtAsc(issueNumber);
+            List<Comment> comments = commentRepo.findAllByIdOrderByCreatedAtAsc(issueId);
             List<CommentResponse> commentResponses = comments.stream().map(CommentResponse::new).toList();
-            return new CommentListResponse(issueNumber, commentResponses);
+            return new CommentListResponse(issueId, commentResponses);
         }
     }
 

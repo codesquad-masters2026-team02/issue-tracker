@@ -11,7 +11,7 @@ public record LabelResponse (
         TextColor textColor
 ) {
     public static LabelResponse from(Label label) {
-        return new LabelResponse(label.getLabelId(), label.getName(), label.getDescription(),
+        return new LabelResponse(label.getId(), label.getName(), label.getDescription(),
                 label.getBackgroundColor(), label.getTextColor());
     }
 

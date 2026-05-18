@@ -38,7 +38,7 @@ public class IssueService {
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
-        commentService.postComment(saved.getIssueNumber(),issueBodyRequest,CommentType.ISSUE_BODY);
+        commentService.postComment(saved.getId(),issueBodyRequest,CommentType.ISSUE_BODY);
 
         return IssueResponse.from(saved);
     }

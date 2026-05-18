@@ -14,6 +14,6 @@ public record IssueResponse(
         Long milestoneId
         ) {
     public static IssueResponse from(Issue issue) {
-        return new IssueResponse(issue.getIssueNumber(), issue.getTitle(), issue.getStatus(), issue.getCreatedAt(), issue.getMilestoneId());
+        return new IssueResponse(issue.getId(), issue.getTitle(), issue.getStatus(), issue.getCreatedAt(), issue.getMilestoneId());
     }
 }
