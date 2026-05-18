@@ -11,7 +11,14 @@ import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
+import com.codesquad.issueTracker.label.Label;
+import com.codesquad.issueTracker.label.LabelRepository;
+import com.codesquad.issueTracker.label.dto.LabelSummaryResponse;
 import com.codesquad.issueTracker.milestone.MilestoneService;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IssueService {
     private final IssueRepository issueRepository;
+    private final LabelRepository labelRepository;
     private final CommentService commentService;
     private final MilestoneService milestoneService;
+    private final IssueResponseMapper issueResponseMapper;
 
 
     @Transactional
@@ -40,20 +49,34 @@ public class IssueService {
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
         commentService.postComment(saved.getId(),issueBodyRequest,CommentType.ISSUE_BODY);
 
-        return IssueResponse.from(saved);
+        List<LabelSummaryResponse> labels = findLabelsByIssueLabels(issue);
+        return IssueResponse.from(saved, labels);
     }
 
     public IssueSearchResponse getIssues(IssueSearchCondition condition) {
-        List<Issue> issues = issueRepository.findByStatus(condition.status());
         long openIssueCount = issueRepository.countByStatus(IssueStatus.OPEN);
         long closedIssueCount = issueRepository.countByStatus(IssueStatus.CLOSED);
+        List<Issue> issues = issueRepository.findByStatus(condition.status());
 
-        return IssueSearchResponse.from(openIssueCount, closedIssueCount, issues);
+        Set<Long> labelIds = issues.stream()
+                .flatMap(issue -> issue.getLabels().stream())
+                .map(IssueLabel::labelId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Label> labelMap = labelRepository.findAllById(labelIds).stream()
+                .collect(Collectors.toMap(Label::getId, Function.identity()));
+
+        List<IssueResponse> issueResponses = issues.stream()
+                .map(issue -> issueResponseMapper.toResponse(issue, labelMap))
+                .toList();
+
+        return IssueSearchResponse.from(openIssueCount, closedIssueCount, issueResponses);
     }
 
-    public IssueResponse findIssueById(Long id){
+    public IssueResponse findIssueById(Long id) {
         Issue issue = findById(id);
-        return IssueResponse.from(issue);
+        List<LabelSummaryResponse> labels = findLabelsByIssueLabels(issue);
+        return IssueResponse.from(issue, labels);
     }
 
     @Transactional
@@ -78,4 +101,12 @@ public class IssueService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
     }
 
+    private List<LabelSummaryResponse> findLabelsByIssueLabels(Issue issue) {
+        List<Long> labelIds = issue.getLabels().stream()
+                .map(IssueLabel::labelId)
+                .toList();
+        return labelRepository.findAllById(labelIds).stream()
+                .map(LabelSummaryResponse::from)
+                .toList();
+    }
 }
