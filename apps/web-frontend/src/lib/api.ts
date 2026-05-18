@@ -16,17 +16,54 @@ export const api = axios.create({
 // ----- Schemas (openapi.yaml 와 동일) -----
 export type IssueStatus = 'OPEN' | 'CLOSED';
 
-export interface IssueResponse {
+export interface LabelSummaryResponse {
+  labelId: number;
+  name: string;
+  backgroundColor: string;
+  textColor: LabelTextColor;
+}
+
+export interface MilestoneReferenceResponse {
+  milestoneId: number;
+  title: string;
+}
+
+export interface MilestoneSummaryResponse {
+  id: number;
+  name: string;
+  openIssueCount: number;
+  closedIssueCount: number;
+}
+
+export interface IssueSummaryResponse {
   issueNumber: number;
   title: string;
   status: IssueStatus;
   createdAt: string; // ISO date-time
+  labels: LabelSummaryResponse[];
+  milestone?: MilestoneReferenceResponse | null;
+}
+
+export interface IssueDetailResponse {
+  issueNumber: number;
+  title: string;
+  status: IssueStatus;
+  createdAt: string; // ISO date-time
+  labels: LabelSummaryResponse[];
+  milestone?: MilestoneSummaryResponse | null;
+}
+
+export interface IssueSearchResponse {
+  openIssueCount: number;
+  closedIssueCount: number;
+  issues: IssueSummaryResponse[];
 }
 
 export interface IssueRequest {
   title: string;
   content: string;
   labelIds?: number[];
+  milestoneId?: number | null;
 }
 
 export type LabelTextColor = 'DARK' | 'LIGHT';
@@ -110,24 +147,27 @@ export interface ApiResponse<T> {
 }
 
 // ----- Endpoints -----
-async function fetchIssues(): Promise<IssueResponse[]> {
-  const { data } = await api.get<ApiResponse<IssueResponse[]>>('/api/issues');
+async function fetchIssues(status: IssueStatus): Promise<IssueSearchResponse> {
+  const { data } = await api.get<ApiResponse<IssueSearchResponse>>(
+    '/api/issues',
+    { params: { status } },
+  );
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '이슈 목록을 불러오지 못했습니다.');
   }
   return data.data;
 }
 
-async function fetchIssueDetail(id: number): Promise<IssueResponse> {
-  const { data } = await api.get<ApiResponse<IssueResponse>>(`/api/issues/${id}`);
+async function fetchIssueDetail(id: number): Promise<IssueDetailResponse> {
+  const { data } = await api.get<ApiResponse<IssueDetailResponse>>(`/api/issues/${id}`);
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '이슈 상세를 불러오지 못했습니다.');
   }
   return data.data;
 }
 
-async function createIssue(body: IssueRequest): Promise<IssueResponse> {
-  const { data } = await api.post<ApiResponse<IssueResponse>>('/api/issues', body);
+async function createIssue(body: IssueRequest): Promise<IssueDetailResponse> {
+  const { data } = await api.post<ApiResponse<IssueDetailResponse>>('/api/issues', body);
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '이슈를 생성하지 못했습니다.');
   }
@@ -250,7 +290,7 @@ async function deleteComment(commentId: number): Promise<void> {
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
-  list: () => [...issueKeys.all, 'list'] as const,
+  list: (status: IssueStatus) => [...issueKeys.all, 'list', status] as const,
   detail: (id: number) => [...issueKeys.all, 'detail', id] as const,
   comments: (id: number) => [...issueKeys.detail(id), 'comments'] as const,
 };
@@ -265,10 +305,10 @@ export const milestoneKeys = {
   list: (status: MilestoneStatus) => [...milestoneKeys.all, 'list', status] as const,
 };
 
-export function useIssueListQuery() {
+export function useIssueListQuery(status: IssueStatus = 'OPEN') {
   return useQuery({
-    queryKey: issueKeys.list(),
-    queryFn: fetchIssues,
+    queryKey: issueKeys.list(status),
+    queryFn: () => fetchIssues(status),
   });
 }
 

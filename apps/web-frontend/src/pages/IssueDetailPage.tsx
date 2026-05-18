@@ -8,6 +8,7 @@ import {
   type CommentResponse,
 } from '../lib/api';
 import { icon } from '../lib/icons';
+import { LabelBadge } from '../components/LabelBadge';
 import './IssueDetailPage.css';
 
 function formatRelative(iso: string) {
@@ -146,6 +147,14 @@ export function IssueDetailPage() {
   if (!issue) return null;
 
   const isOpen = issue.status === 'OPEN';
+  const labels = issue.labels ?? [];
+  const milestone = issue.milestone ?? null;
+  const milestoneTotalCount = milestone
+    ? milestone.openIssueCount + milestone.closedIssueCount
+    : 0;
+  const milestoneProgress = milestoneTotalCount > 0 && milestone
+    ? Math.round((milestone.closedIssueCount / milestoneTotalCount) * 100)
+    : 0;
 
   return (
     <div className="issue-detail">
@@ -273,16 +282,32 @@ export function IssueDetailPage() {
         {/* 우: 사이드바 (단일 카드) + 이슈 삭제 버튼 */}
         <aside className="issue-detail__aside">
           <div className="sidebar-card">
-            {(['담당자', '레이블'] as const).map((label) => (
-              <div key={label} className="sidebar-card__section">
-                <div className="sidebar-card__head">
-                  <span>{label}</span>
-                  <button type="button" aria-label={`${label} 변경`} className="sidebar-card__plus">
-                    <img src={icon('plus')} alt="" width={16} height={16} />
-                  </button>
-                </div>
+            <div className="sidebar-card__section">
+              <div className="sidebar-card__head">
+                <span>담당자</span>
+                <button type="button" aria-label="담당자 변경" className="sidebar-card__plus">
+                  <img src={icon('plus')} alt="" width={16} height={16} />
+                </button>
               </div>
-            ))}
+              <p className="sidebar-card__placeholder">담당자가 없습니다.</p>
+            </div>
+            <div className="sidebar-card__section">
+              <div className="sidebar-card__head">
+                <span>레이블</span>
+                <button type="button" aria-label="레이블 변경" className="sidebar-card__plus">
+                  <img src={icon('plus')} alt="" width={16} height={16} />
+                </button>
+              </div>
+              <div className="sidebar-card__items sidebar-card__items--labels">
+                {labels.length > 0 ? (
+                  labels.map((label) => (
+                    <LabelBadge key={label.labelId} label={label} />
+                  ))
+                ) : (
+                  <p className="sidebar-card__placeholder">레이블이 없습니다.</p>
+                )}
+              </div>
+            </div>
             <div className="sidebar-card__section">
               <div className="sidebar-card__head">
                 <span>마일스톤</span>
@@ -290,12 +315,25 @@ export function IssueDetailPage() {
                   <img src={icon('plus')} alt="" width={16} height={16} />
                 </button>
               </div>
-              <div className="progress">
-                <div className="progress__track">
-                  <div className="progress__fill" style={{ width: '0%' }} />
-                </div>
-                <span className="progress__label">0%</span>
-              </div>
+              {milestone ? (
+                <>
+                  <div className="sidebar-milestone">
+                    <img src={icon('milestone')} alt="" width={16} height={16} />
+                    <span>{milestone.name}</span>
+                  </div>
+                  <div className="progress">
+                    <div className="progress__track">
+                      <div className="progress__fill" style={{ width: `${milestoneProgress}%` }} />
+                    </div>
+                    <span className="progress__label">{milestoneProgress}%</span>
+                  </div>
+                  <p className="sidebar-milestone__counts">
+                    열린 이슈 {milestone.openIssueCount}개 · 닫힌 이슈 {milestone.closedIssueCount}개
+                  </p>
+                </>
+              ) : (
+                <p className="sidebar-card__placeholder">마일스톤이 없습니다.</p>
+              )}
             </div>
           </div>
 

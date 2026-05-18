@@ -6,6 +6,73 @@ servers:
 - url: http://localhost:8080
   description: Generated server url
 paths:
+  /api/milestones/{id}:
+    put:
+      tags:
+      - milestone-controller
+      operationId: updateMilestone
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMilestoneResponse"
+    delete:
+      tags:
+      - milestone-controller
+      operationId: deleteMilestone
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+    patch:
+      tags:
+      - milestone-controller
+      operationId: updateMilestoneStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneStatusUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMilestoneResponse"
   /api/labels/{id}:
     get:
       tags:
@@ -24,7 +91,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseLabelResponse"
+                $ref: "#/components/schemas/ApiResponseLabelDetailResponse"
     put:
       tags:
       - label-controller
@@ -48,7 +115,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseLabelResponse"
+                $ref: "#/components/schemas/ApiResponseLabelDetailResponse"
     delete:
       tags:
       - label-controller
@@ -67,6 +134,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /api/milestones:
+    get:
+      tags:
+      - milestone-controller
+      operationId: getMilestoneList
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          default: OPEN
+          enum:
+          - OPEN
+          - CLOSED
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMilestoneListResponse"
+    post:
+      tags:
+      - milestone-controller
+      operationId: postNewMilestone
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMilestoneResponse"
   /api/labels:
     get:
       tags:
@@ -78,7 +184,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseLabelsResponse"
+                $ref: "#/components/schemas/ApiResponseLabelListResponse"
     post:
       tags:
       - label-controller
@@ -95,19 +201,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseLabelResponse"
+                $ref: "#/components/schemas/ApiResponseLabelDetailResponse"
   /api/issues:
     get:
       tags:
       - issue-controller
       operationId: mainPage
+      parameters:
+      - name: condition
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/IssueSearchCondition"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseListIssueResponse"
+                $ref: "#/components/schemas/ApiResponseIssueSearchResponse"
     post:
       tags:
       - issue-controller
@@ -124,7 +236,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseIssueResponse"
+                $ref: "#/components/schemas/ApiResponseIssueDetailResponse"
   /api/issues/{id}/comments:
     get:
       tags:
@@ -186,7 +298,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponseIssueResponse"
+                $ref: "#/components/schemas/ApiResponseIssueDetailResponse"
+    patch:
+      tags:
+      - issue-controller
+      operationId: updateStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIssueStatusRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/status:
+    patch:
+      tags:
+      - issue-controller
+      operationId: bulkUpdateStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkIssueRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
   /api/comments/{id}:
     delete:
       tags:
@@ -208,6 +362,60 @@ paths:
                 $ref: "#/components/schemas/ApiResponseVoid"
 components:
   schemas:
+    MilestoneRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 0
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date
+    ApiResponseMilestoneResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/MilestoneResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    ErrorDto:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    MilestoneResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+        openIssueCount:
+          type: integer
+          format: int32
+        closedIssueCount:
+          type: integer
+          format: int32
     LabelRequest:
       required:
       - backgroundColor
@@ -227,23 +435,16 @@ components:
           enum:
           - DARK
           - LIGHT
-    ApiResponseLabelResponse:
+    ApiResponseLabelDetailResponse:
       type: object
       properties:
         success:
           type: boolean
         data:
-          $ref: "#/components/schemas/LabelResponse"
+          $ref: "#/components/schemas/LabelDetailResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
-    ErrorDto:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-    LabelResponse:
+    LabelDetailResponse:
       type: object
       properties:
         labelId:
@@ -272,16 +473,19 @@ components:
           items:
             type: integer
             format: int64
-    ApiResponseIssueResponse:
+        milestoneId:
+          type: integer
+          format: int64
+    ApiResponseIssueDetailResponse:
       type: object
       properties:
         success:
           type: boolean
         data:
-          $ref: "#/components/schemas/IssueResponse"
+          $ref: "#/components/schemas/IssueDetailResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
-    IssueResponse:
+    IssueDetailResponse:
       type: object
       properties:
         issueNumber:
@@ -297,6 +501,41 @@ components:
         createdAt:
           type: string
           format: date-time
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelSummaryResponse"
+        milestone:
+          $ref: "#/components/schemas/MilestoneSummaryResponse"
+    LabelSummaryResponse:
+      type: object
+      properties:
+        labelId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        backgroundColor:
+          type: string
+        textColor:
+          type: string
+          enum:
+          - DARK
+          - LIGHT
+    MilestoneSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        openIssueCount:
+          type: integer
+          format: int32
+        closedIssueCount:
+          type: integer
+          format: int32
     CommentRequest:
       type: object
       properties:
@@ -324,33 +563,152 @@ components:
         created_at:
           type: string
           format: date-time
-    ApiResponseLabelsResponse:
+    MilestoneStatusUpdateRequest:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+    UpdateIssueStatusRequest:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+    ApiResponseVoid:
       type: object
       properties:
         success:
           type: boolean
         data:
-          $ref: "#/components/schemas/LabelsResponse"
+          type: object
         error:
           $ref: "#/components/schemas/ErrorDto"
-    LabelsResponse:
+    BulkIssueRequest:
+      required:
+      - issueIds
+      - status
+      type: object
+      properties:
+        issueIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+    ApiResponseMilestoneListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/MilestoneListResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    MilestoneListResponse:
+      type: object
+      properties:
+        milestoneCount:
+          type: integer
+          format: int32
+        openMilestoneCount:
+          type: integer
+          format: int32
+        closedMilestoneCount:
+          type: integer
+          format: int32
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/MilestoneResponse"
+    ApiResponseLabelListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/LabelListResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    LabelListResponse:
       type: object
       properties:
         labels:
           type: array
           items:
-            $ref: "#/components/schemas/LabelResponse"
-    ApiResponseListIssueResponse:
+            $ref: "#/components/schemas/LabelDetailResponse"
+    IssueSearchCondition:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+    ApiResponseIssueSearchResponse:
       type: object
       properties:
         success:
           type: boolean
         data:
-          type: array
-          items:
-            $ref: "#/components/schemas/IssueResponse"
+          $ref: "#/components/schemas/IssueSearchResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
+    IssueSearchResponse:
+      type: object
+      properties:
+        openIssueCount:
+          type: integer
+          format: int64
+        closedIssueCount:
+          type: integer
+          format: int64
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueSummaryResponse"
+    IssueSummaryResponse:
+      type: object
+      properties:
+        issueNumber:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+        createdAt:
+          type: string
+          format: date-time
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabelSummaryResponse"
+        milestone:
+          $ref: "#/components/schemas/MilestoneReferenceResponse"
+    MilestoneReferenceResponse:
+      type: object
+      properties:
+        milestoneId:
+          type: integer
+          format: int64
+        title:
+          type: string
     ApiResponseCommentListResponse:
       type: object
       properties:
@@ -373,12 +731,3 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CommentResponse"
-    ApiResponseVoid:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: object
-        error:
-          $ref: "#/components/schemas/ErrorDto"

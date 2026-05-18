@@ -4,9 +4,10 @@ import {
   useIssueListQuery,
   useLabelListQuery,
   useMilestoneListQuery,
-  type IssueResponse,
+  type IssueStatus,
 } from '../lib/api';
 import { icon } from '../lib/icons';
+import { LabelBadge } from '../components/LabelBadge';
 import './IssueListPage.css';
 
 function formatRelative(iso: string) {
@@ -21,27 +22,33 @@ function formatRelative(iso: string) {
   return `${diffDay}일 전`;
 }
 
-type Tab = 'OPEN' | 'CLOSED';
+type Tab = IssueStatus;
 
 export function IssueListPage() {
-  const { data, isLoading, isError, error } = useIssueListQuery();
+  const [tab, setTab] = useState<Tab>('OPEN');
+  const { data, isLoading, isError, error } = useIssueListQuery(tab);
   const { data: labels = [] } = useLabelListQuery();
   const { data: milestoneList } = useMilestoneListQuery();
-  const [tab, setTab] = useState<Tab>('OPEN');
   const [keyword, setKeyword] = useState('is:issue is:open');
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
 
   const { openCount, closedCount, rows } = useMemo(() => {
-    const all: IssueResponse[] = data ?? [];
-    const open = all.filter((i) => i.status === 'OPEN');
-    const closed = all.filter((i) => i.status === 'CLOSED');
-    const base = tab === 'OPEN' ? open : closed;
+    const base = data?.issues ?? [];
     const kw = keyword.replace(/is:issue|is:open|is:closed/gi, '').trim().toLowerCase();
     const filtered = kw
       ? base.filter((i) => i.title.toLowerCase().includes(kw))
       : base;
-    return { openCount: open.length, closedCount: closed.length, rows: filtered };
-  }, [data, tab, keyword]);
+    return {
+      openCount: data?.openIssueCount ?? 0,
+      closedCount: data?.closedIssueCount ?? 0,
+      rows: filtered,
+    };
+  }, [data, keyword]);
+
+  const handleTabClick = (nextTab: Tab) => {
+    setTab(nextTab);
+    setKeyword(`is:issue ${nextTab === 'OPEN' ? 'is:open' : 'is:closed'}`);
+  };
 
   return (
     <div className="issue-list">
@@ -94,7 +101,7 @@ export function IssueListPage() {
             <button
               type="button"
               className={`issue-table__tab ${tab === 'OPEN' ? 'is-active' : ''}`}
-              onClick={() => setTab('OPEN')}
+              onClick={() => handleTabClick('OPEN')}
             >
               <img src={icon('alertCircle')} alt="" width={16} height={16} />
               열린 이슈({openCount})
@@ -102,7 +109,7 @@ export function IssueListPage() {
             <button
               type="button"
               className={`issue-table__tab ${tab === 'CLOSED' ? 'is-active' : ''}`}
-              onClick={() => setTab('CLOSED')}
+              onClick={() => handleTabClick('CLOSED')}
             >
               <img src={icon('archive')} alt="" width={16} height={16} />
               닫힌 이슈({closedCount})
@@ -143,12 +150,23 @@ export function IssueListPage() {
                 className="issue-row__status"
               />
               <div className="issue-row__main">
-                <Link to={`/issues/${issue.issueNumber}`} className="issue-row__title">
-                  {issue.title}
-                </Link>
+                <div className="issue-row__title-line">
+                  <Link to={`/issues/${issue.issueNumber}`} className="issue-row__title">
+                    {issue.title}
+                  </Link>
+                  {(issue.labels ?? []).map((label) => (
+                    <LabelBadge key={label.labelId} label={label} />
+                  ))}
+                </div>
                 <div className="issue-row__meta">
                   <span>#{issue.issueNumber}</span>
                   <span>이 이슈가 {formatRelative(issue.createdAt)}에 작성되었습니다</span>
+                  {issue.milestone && (
+                    <span className="issue-row__milestone">
+                      <img src={icon('milestone')} alt="" width={14} height={14} />
+                      {issue.milestone.title}
+                    </span>
+                  )}
                 </div>
               </div>
               <img

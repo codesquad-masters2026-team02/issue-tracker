@@ -132,16 +132,36 @@
 .issue-row:last-child { border-bottom: none; }
 .issue-row__status { flex: 0 0 auto; }
 .issue-row__main { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+.issue-row__title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
 .issue-row__title {
   font-size: var(--text-issue-title-size);
   font-weight: var(--text-issue-title-weight);
   color: var(--color-text-link);
+  overflow-wrap: anywhere;
 }
 .issue-row__title:hover { text-decoration: none; }
 .issue-row__meta {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-4);
   color: var(--color-text-tertiary);
   font-size: var(--text-caption-size);
+}
+.issue-row__milestone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.issue-row__milestone img {
+  flex: 0 0 auto;
+  opacity: 0.7;
 }
 .issue-row__assignee { border-radius: var(--radius-full); }
