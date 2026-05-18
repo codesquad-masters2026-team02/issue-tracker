@@ -83,9 +83,11 @@
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-card);
-  overflow: hidden;
+  overflow: visible;
 }
 .issue-table__head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--space-6);
@@ -94,6 +96,12 @@
   border-bottom: 1px solid var(--color-border-default);
 }
 .issue-table__select-all { display: flex; align-items: center; }
+.issue-table__select-all input,
+.issue-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-interactive-primary);
+}
 .issue-table__tabs { display: flex; gap: var(--space-6); }
 .issue-table__tab {
   display: inline-flex;
@@ -112,8 +120,64 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
 }
+.issue-table__selection-summary {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+.issue-table__bulk-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+.status-menu {
+  position: relative;
+}
+.status-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.status-menu__trigger[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+.status-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 180px;
+  padding: var(--space-2);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-dropdown);
+  box-shadow: var(--shadow-dropdown);
+}
+.status-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--text-body-size);
+  text-align: left;
+}
+.status-menu__item:hover:not([disabled]) {
+  background-color: var(--color-bg-hover);
+}
+.status-menu__item[disabled] {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
 
-.issue-table__body { list-style: none; }
+.issue-table__body {
+  display: block;
+  list-style: none;
+  background-color: var(--color-bg-surface);
+}
 .issue-table__empty {
   padding: var(--space-12) var(--space-6);
   text-align: center;
@@ -132,16 +196,36 @@
 .issue-row:last-child { border-bottom: none; }
 .issue-row__status { flex: 0 0 auto; }
 .issue-row__main { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); }
+.issue-row__title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
 .issue-row__title {
   font-size: var(--text-issue-title-size);
   font-weight: var(--text-issue-title-weight);
   color: var(--color-text-link);
+  overflow-wrap: anywhere;
 }
 .issue-row__title:hover { text-decoration: none; }
 .issue-row__meta {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-4);
   color: var(--color-text-tertiary);
   font-size: var(--text-caption-size);
+}
+.issue-row__milestone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.issue-row__milestone img {
+  flex: 0 0 auto;
+  opacity: 0.7;
 }
 .issue-row__assignee { border-radius: var(--radius-full); }

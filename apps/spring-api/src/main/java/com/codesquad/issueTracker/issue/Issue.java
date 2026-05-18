@@ -17,7 +17,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @NoArgsConstructor
 public class Issue {
     @Id
-    private Long issueNumber;
+    private Long id;
     private Long authorId;
     private String title;
     private IssueStatus status;
@@ -25,7 +25,7 @@ public class Issue {
     private LocalDateTime createdAt;
     private Long milestoneId;
 
-    @MappedCollection(idColumn = "ISSUE_NUMBER")
+    @MappedCollection(idColumn = "ISSUE_ID")
     private Set<IssueLabel> labels = new HashSet<>();
 
     public void changeStatus(IssueStatus status) {

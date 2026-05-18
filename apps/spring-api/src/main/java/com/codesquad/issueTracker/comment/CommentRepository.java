@@ -11,7 +11,8 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends ListCrudRepository<Comment,Long> {
 
-    List<Comment> findAllByIssueNumberOrderByCreatedAtAsc(Long issueNumber);
+    @Query("SELECT * FROM COMMENTS WHERE issue_id = :issueId ORDER BY created_at ASC")
+    List<Comment> findAllByIssueIdOrderByCreatedAtAsc(@Param("issueId") Long issueId);
 
     @Modifying
     @Query("DELETE FROM COMMENTS WHERE id = :id")

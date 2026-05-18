@@ -15,7 +15,7 @@ CREATE TABLE milestones(
    is_deleted BOOLEAN
 );
 CREATE TABLE issues (
-    issue_number BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     author_id    BIGINT,
     title        VARCHAR(255),
     status       VARCHAR(50),
@@ -24,7 +24,7 @@ CREATE TABLE issues (
     CONSTRAINT fk_milestone FOREIGN KEY (milestone_id) REFERENCES milestones(id)
 );
 CREATE TABLE labels (
-    label_id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
     name             VARCHAR(50) NOT NULL,
     description      VARCHAR(100),
     background_color CHAR(7) NOT NULL,
@@ -38,15 +38,15 @@ CREATE TABLE comments (
     created_at DATETIME NOT NULL,
     updated_at DATETIME,
     user_id BIGINT,
-    issue_number BIGINT,
-    CONSTRAINT fk_issue_number FOREIGN KEY (issue_number) REFERENCES ISSUES(issue_number)
+    issue_id BIGINT,
+    CONSTRAINT fk_issue_id FOREIGN KEY (issue_id) REFERENCES ISSUES(id)
 );
 CREATE TABLE issue_labels
 (
-    issue_number BIGINT,
+    issue_id BIGINT,
     label_id     BIGINT,
-    PRIMARY KEY (issue_number, label_id),
-    FOREIGN KEY (issue_number) REFERENCES issues (issue_number) ON DELETE CASCADE,
-    FOREIGN KEY (label_id) REFERENCES labels (label_id) ON DELETE CASCADE
+    PRIMARY KEY (issue_id, label_id),
+    FOREIGN KEY (issue_id) REFERENCES issues (id) ON DELETE CASCADE,
+    FOREIGN KEY (label_id) REFERENCES labels (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_label_id ON issue_labels (label_id);

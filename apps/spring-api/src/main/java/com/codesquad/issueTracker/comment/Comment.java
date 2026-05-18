@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
@@ -27,5 +26,5 @@ public class Comment {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long userId;
-    private AggregateReference<Issue,Long> issueNumber;
+    private AggregateReference<Issue,Long> issueId;
 }

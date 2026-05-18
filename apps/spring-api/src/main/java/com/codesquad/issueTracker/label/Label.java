@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 public class Label {
     @Id
-    private Long labelId;
+    private Long id;
     private String name;
     private String description;
     private String backgroundColor;
