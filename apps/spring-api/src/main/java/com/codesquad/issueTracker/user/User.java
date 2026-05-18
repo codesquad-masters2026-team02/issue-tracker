@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(name = "users")
+@Table(name = "USERS")
 @Getter
 @AllArgsConstructor
 public class User {
@@ -15,5 +15,5 @@ public class User {
     private String password;
     private String oauthProvider;
     private String oauthId;
-    private String profileImageUlr;
+    private String profileImageUrl;
 }
