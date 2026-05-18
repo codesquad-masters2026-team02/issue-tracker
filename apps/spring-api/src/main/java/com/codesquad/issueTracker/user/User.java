@@ -13,6 +13,7 @@ public class User {
     private Long id;
     private String username;
     private String password;
+    private String refresh_token;
     private String oauthProvider;
     private String oauthId;
     private String profileImageUrl;

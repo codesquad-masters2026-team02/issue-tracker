@@ -55,6 +55,7 @@ CREATE TABLE users(
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(64),
     password VARCHAR(128),
+    refresh_token TEXT,
     oauth_provider VARCHAR(50),
     oauth_id VARCHAR(255),
     profile_image_url VARCHAR(512)
