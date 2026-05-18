@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  useBulkUpdateIssueStatusMutation,
   useIssueListQuery,
   useLabelListQuery,
   useMilestoneListQuery,
@@ -29,7 +30,15 @@ export function IssueListPage() {
   const { data, isLoading, isError, error } = useIssueListQuery(tab);
   const { data: labels = [] } = useLabelListQuery();
   const { data: milestoneList } = useMilestoneListQuery();
+  const {
+    mutate: bulkUpdateIssueStatus,
+    isPending: isBulkStatusPending,
+    error: bulkStatusError,
+  } = useBulkUpdateIssueStatusMutation();
   const [keyword, setKeyword] = useState('is:issue is:open');
+  const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
 
   const { openCount, closedCount, rows } = useMemo(() => {
@@ -45,9 +54,63 @@ export function IssueListPage() {
     };
   }, [data, keyword]);
 
+  const visibleIssueIds = useMemo(
+    () => rows.map((issue) => issue.issueNumber),
+    [rows],
+  );
+  const selectedCount = selectedIssueIds.size;
+  const isAllVisibleSelected = rows.length > 0
+    && visibleIssueIds.every((issueNumber) => selectedIssueIds.has(issueNumber));
+  const isPartiallySelected = selectedCount > 0 && !isAllVisibleSelected;
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    selectAllRef.current.indeterminate = isPartiallySelected;
+  }, [isPartiallySelected]);
+
+  useEffect(() => {
+    const visibleIds = new Set(visibleIssueIds);
+    setSelectedIssueIds((current) => {
+      const next = new Set([...current].filter((issueId) => visibleIds.has(issueId)));
+      return next.size === current.size ? current : next;
+    });
+  }, [visibleIssueIds]);
+
   const handleTabClick = (nextTab: Tab) => {
     setTab(nextTab);
     setKeyword(`is:issue ${nextTab === 'OPEN' ? 'is:open' : 'is:closed'}`);
+    setSelectedIssueIds(new Set());
+    setIsStatusMenuOpen(false);
+  };
+
+  const handleSelectAllChange = () => {
+    setSelectedIssueIds(isAllVisibleSelected ? new Set() : new Set(visibleIssueIds));
+  };
+
+  const toggleIssueSelection = (issueNumber: number) => {
+    setSelectedIssueIds((current) => {
+      const next = new Set(current);
+      if (next.has(issueNumber)) {
+        next.delete(issueNumber);
+      } else {
+        next.add(issueNumber);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkStatusChange = (status: IssueStatus) => {
+    if (selectedIssueIds.size === 0 || isBulkStatusPending) return;
+
+    bulkUpdateIssueStatus(
+      { issueIds: [...selectedIssueIds], status },
+      {
+        onSuccess: () => {
+          setSelectedIssueIds(new Set());
+          setIsStatusMenuOpen(false);
+        },
+      },
+    );
   };
 
   return (
@@ -95,34 +158,84 @@ export function IssueListPage() {
       <section className="issue-table">
         <header className="issue-table__head">
           <label className="issue-table__select-all">
-            <input type="checkbox" />
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={isAllVisibleSelected}
+              disabled={rows.length === 0 || isBulkStatusPending}
+              onChange={handleSelectAllChange}
+            />
           </label>
-          <div className="issue-table__tabs">
-            <button
-              type="button"
-              className={`issue-table__tab ${tab === 'OPEN' ? 'is-active' : ''}`}
-              onClick={() => handleTabClick('OPEN')}
-            >
-              <img src={icon('alertCircle')} alt="" width={16} height={16} />
-              열린 이슈({openCount})
-            </button>
-            <button
-              type="button"
-              className={`issue-table__tab ${tab === 'CLOSED' ? 'is-active' : ''}`}
-              onClick={() => handleTabClick('CLOSED')}
-            >
-              <img src={icon('archive')} alt="" width={16} height={16} />
-              닫힌 이슈({closedCount})
-            </button>
-          </div>
-          <div className="issue-table__filters">
-            {(['담당자', '레이블', '마일스톤', '작성자'] as const).map((label) => (
-              <button key={label} type="button" className="issue-table__filter-btn">
-                {label}
-                <img src={icon('chevronDown')} alt="" width={16} height={16} />
-              </button>
-            ))}
-          </div>
+          {selectedCount > 0 ? (
+            <>
+              <div className="issue-table__selection-summary">
+                {selectedCount}개 이슈 선택
+              </div>
+              <div className="issue-table__bulk-actions">
+                <div className="status-menu">
+                  <button
+                    type="button"
+                    className="status-menu__trigger"
+                    disabled={isBulkStatusPending}
+                    aria-expanded={isStatusMenuOpen}
+                    onClick={() => setIsStatusMenuOpen((current) => !current)}
+                  >
+                    상태 수정
+                    <img src={icon('chevronDown')} alt="" width={16} height={16} />
+                  </button>
+                  {isStatusMenuOpen && (
+                    <div className="status-menu__panel">
+                      <button
+                        type="button"
+                        className="status-menu__item"
+                        disabled={tab === 'OPEN' || isBulkStatusPending}
+                        onClick={() => handleBulkStatusChange('OPEN')}
+                      >
+                        선택한 이슈 열기
+                      </button>
+                      <button
+                        type="button"
+                        className="status-menu__item"
+                        disabled={tab === 'CLOSED' || isBulkStatusPending}
+                        onClick={() => handleBulkStatusChange('CLOSED')}
+                      >
+                        선택한 이슈 닫기
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="issue-table__tabs">
+                <button
+                  type="button"
+                  className={`issue-table__tab ${tab === 'OPEN' ? 'is-active' : ''}`}
+                  onClick={() => handleTabClick('OPEN')}
+                >
+                  <img src={icon('alertCircle')} alt="" width={16} height={16} />
+                  열린 이슈({openCount})
+                </button>
+                <button
+                  type="button"
+                  className={`issue-table__tab ${tab === 'CLOSED' ? 'is-active' : ''}`}
+                  onClick={() => handleTabClick('CLOSED')}
+                >
+                  <img src={icon('archive')} alt="" width={16} height={16} />
+                  닫힌 이슈({closedCount})
+                </button>
+              </div>
+              <div className="issue-table__filters">
+                {(['담당자', '레이블', '마일스톤', '작성자'] as const).map((label) => (
+                  <button key={label} type="button" className="issue-table__filter-btn">
+                    {label}
+                    <img src={icon('chevronDown')} alt="" width={16} height={16} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </header>
 
         <ul className="issue-table__body">
@@ -139,9 +252,19 @@ export function IssueListPage() {
                 : '등록된 이슈가 없습니다.'}
             </li>
           )}
+          {bulkStatusError && (
+            <li className="issue-table__empty issue-table__empty--error">
+              {(bulkStatusError as Error).message}
+            </li>
+          )}
           {rows.map((issue) => (
             <li key={issue.issueNumber} className="issue-row">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={selectedIssueIds.has(issue.issueNumber)}
+                disabled={isBulkStatusPending}
+                onChange={() => toggleIssueSelection(issue.issueNumber)}
+              />
               <img
                 src={icon(issue.status === 'OPEN' ? 'alertCircle' : 'archive')}
                 alt={issue.status === 'OPEN' ? '열린 이슈' : '닫힌 이슈'}

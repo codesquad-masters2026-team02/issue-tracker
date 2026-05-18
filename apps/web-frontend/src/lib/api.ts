@@ -66,6 +66,11 @@ export interface IssueRequest {
   milestoneId?: number | null;
 }
 
+export interface BulkIssueRequest {
+  issueIds: number[];
+  status: IssueStatus;
+}
+
 export type LabelTextColor = 'DARK' | 'LIGHT';
 
 export interface LabelRequest {
@@ -172,6 +177,13 @@ async function createIssue(body: IssueRequest): Promise<IssueDetailResponse> {
     throw new Error(data.error?.message ?? '이슈를 생성하지 못했습니다.');
   }
   return data.data;
+}
+
+async function bulkUpdateIssueStatus(body: BulkIssueRequest): Promise<void> {
+  const { data } = await api.patch<ApiResponse<void>>('/api/issues/status', body);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '이슈 상태를 수정하지 못했습니다.');
+  }
 }
 
 async function fetchLabels(): Promise<LabelResponse[]> {
@@ -324,6 +336,16 @@ export function useCreateIssueMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createIssue,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useBulkUpdateIssueStatusMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: bulkUpdateIssueStatus,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.all });
     },
