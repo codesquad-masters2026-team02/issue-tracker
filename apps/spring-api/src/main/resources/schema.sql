@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS labels;
 DROP TABLE IF EXISTS issue_labels;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS milestones;
+DROP TABLE IF EXISTS users;
 
 CREATE TABLE milestones(
    id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -49,4 +50,14 @@ CREATE TABLE issue_labels
     FOREIGN KEY (issue_id) REFERENCES issues (id) ON DELETE CASCADE,
     FOREIGN KEY (label_id) REFERENCES labels (id) ON DELETE CASCADE
 );
+
+CREATE TABLE users(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(64),
+    password VARCHAR(128),
+    oauth_provider VARCHAR(50),
+    oauth_id VARCHAR(255),
+    profile_image_url VARCHAR(512)
+);
+
 CREATE INDEX idx_label_id ON issue_labels (label_id);

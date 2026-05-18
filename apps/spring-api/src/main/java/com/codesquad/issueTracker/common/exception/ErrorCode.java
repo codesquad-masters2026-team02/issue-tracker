@@ -12,7 +12,8 @@ public enum ErrorCode {
     ISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 이슈를 찾을 수 없습니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 코멘트를 찾을 수 없습니다"),
     LABEL_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 레이블을 찾을 수 없습니다"),
-    MILESTONE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 마일스톤을 찾을 수 없습니다");
+    MILESTONE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 마일스톤을 찾을 수 없습니다"),
+    USERNAME_TAKEN(HttpStatus.CONFLICT, "요청하신 유저네임은 이미 사용중입니다");
     private final HttpStatus status;
     private final String message;
 }
