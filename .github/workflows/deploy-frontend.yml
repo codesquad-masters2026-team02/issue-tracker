@@ -1,41 +1,77 @@
-name: Deploy to Vercel
+name: Deploy Frontend to S3 + CloudFront
 
 on:
   push:
     branches: [develop]
     paths:
       - 'apps/web-frontend/**'
-      - 'packages/api-spec/**'
   workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET: ${{ vars.FRONTEND_S3_BUCKET }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.FRONTEND_CLOUDFRONT_ID }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write        # AWS OIDC: 장기 액세스 키 대신 임시 자격증명 발급
+      contents: read
       deployments: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9.12.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22.18.0'
           cache: 'pnpm'
+
       - run: pnpm install --frozen-lockfile
+
       - name: Build
         run: pnpm --filter @issue-tracker/web-frontend build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-      - name: Deploy to Vercel
-        id: deploy
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 1) 해시 붙은 자산은 immutable 캐시로 먼저 업로드 + 옛 자산 삭제
+      - name: Sync hashed assets to S3 (immutable cache)
         run: |
-          url=$(npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> $GITHUB_OUTPUT
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - name: Create GitHub Deployment
+          aws s3 sync apps/web-frontend/dist/ s3://${S3_BUCKET}/ \
+            --delete \
+            --exclude "index.html" \
+            --exclude "*.map" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # 2) index.html은 항상 새로 받게 no-cache로 마지막에 업로드
+      - name: Upload index.html (no cache)
+        run: |
+          aws s3 cp apps/web-frontend/dist/index.html s3://${S3_BUCKET}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html; charset=utf-8"
+
+      # 3) CloudFront의 index.html 캐시만 비움 (해시 자산은 파일명이 바뀌므로 무효화 불필요)
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths "/" "/index.html"
+
+      - name: Create GitHub Deployment status
         uses: actions/github-script@v7
         with:
           script: |
@@ -52,6 +88,6 @@ jobs:
               repo: context.repo.repo,
               deployment_id: deployment.data.id,
               state: 'success',
-              environment_url: '${{ steps.deploy.outputs.url }}',
-              description: 'Deployed to Vercel'
+              environment_url: 'https://${{ vars.FRONTEND_DOMAIN }}',
+              description: 'Deployed to S3 + CloudFront'
             });
