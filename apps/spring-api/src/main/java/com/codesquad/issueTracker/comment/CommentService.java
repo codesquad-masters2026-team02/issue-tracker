@@ -41,9 +41,17 @@ public class CommentService {
         }
     }
 
-    public void deleteCommentByCommentId(Long id){
-        if(commentRepo.deleteCommentById(id) == 0){
-            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
+    public void deleteCommentByCommentIds(Long commentId, Long tokenUserId){
+
+        int deletedRows = commentRepo.deleteCommentByIds(commentId, tokenUserId);
+
+        if(deletedRows == 0){
+                if(!commentRepo.existsById(commentId)){
+                    throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
+                }
+                else{
+                    throw new BusinessException(ErrorCode.UNAUTHORIZED_MODIFICATION);
+                }
         }
     }
 }

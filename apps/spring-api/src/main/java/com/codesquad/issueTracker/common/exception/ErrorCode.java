@@ -18,7 +18,8 @@ public enum ErrorCode {
     USER_INFO_NOT_MATCHED(HttpStatus.UNAUTHORIZED, "로그인 정보가 올바르지 않습니다"),
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유저 정보가 일치하지 않습니다"),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "갱신 토큰이 올바르지 않습니다");
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "갱신 토큰이 올바르지 않습니다"),
+    UNAUTHORIZED_MODIFICATION(HttpStatus.FORBIDDEN, "작성자만 삭제할 수 있습니다");
     private final HttpStatus status;
     private final String message;
 }
