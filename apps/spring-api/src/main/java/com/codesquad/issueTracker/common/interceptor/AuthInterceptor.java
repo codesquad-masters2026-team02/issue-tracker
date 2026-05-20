@@ -23,7 +23,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if(authHeader == null || !authHeader.startsWith("Bearer")){
+        if(authHeader == null || !authHeader.startsWith("Bearer ")){
             throw new BusinessException(ErrorCode.LOGIN_REQUIRED);
         }
         String token = authHeader.substring(7);

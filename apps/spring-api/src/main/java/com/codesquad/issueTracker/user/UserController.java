@@ -7,6 +7,8 @@ import com.codesquad.issueTracker.user.dto.LoginRequest;
 import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.user.dto.TokenResponse;
+import com.codesquad.issueTracker.user.dto.UserInfoResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -44,11 +46,17 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AccessTokenResponse>> refreshAccessToken(@CookieValue(name="refreshToken", required = true) String refreshToken){
+    public ResponseEntity<ApiResponse<AccessTokenResponse>> refreshAccessToken(@CookieValue(name="refreshToken", defaultValue = "none") String refreshToken){
         if(refreshToken.equals("none")){
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
         AccessTokenResponse response = new AccessTokenResponse(service.refreshAccessToken(refreshToken).accessToken());
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return ResponseEntity.ok(ApiResponse.ok(service.findUserInfo(userId)));
     }
 }

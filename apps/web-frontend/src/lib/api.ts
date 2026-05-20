@@ -2,16 +2,60 @@
  * packages/api-spec/openapi.yaml 의 스펙을 그대로 미러링한 얇은 클라이언트.
  * orval 로 generated/index.ts 가 만들어지면, 이 파일을 그쪽으로 교체하면 된다.
  */
-import axios from 'axios';
+import axios, {
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 import {
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { getAccessToken, setAccessToken } from './authToken';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080',
+  withCredentials: true,
 });
+
+interface AuthRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+  _skipAuthRefresh?: boolean;
+}
+
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as AuthRequestConfig | undefined;
+
+    if (
+      error.response?.status === 401
+      && originalRequest
+      && !originalRequest._retry
+      && !originalRequest._skipAuthRefresh
+    ) {
+      originalRequest._retry = true;
+      try {
+        const token = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${token.accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        setAccessToken(null);
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 // ----- Schemas (openapi.yaml 와 동일) -----
 export type IssueStatus = 'OPEN' | 'CLOSED';
@@ -69,6 +113,26 @@ export interface IssueRequest {
 export interface BulkIssueRequest {
   issueIds: number[];
   status: IssueStatus;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  username: string;
+  password: string;
+}
+
+export interface AccessTokenResponse {
+  accessToken: string;
+}
+
+export interface UserInfoResponse {
+  id: number;
+  username: string;
+  profileImageUrl?: string | null;
 }
 
 export type LabelTextColor = 'DARK' | 'LIGHT';
@@ -152,6 +216,51 @@ export interface ApiResponse<T> {
 }
 
 // ----- Endpoints -----
+export async function signIn(body: LoginRequest): Promise<AccessTokenResponse> {
+  const { data } = await api.post<ApiResponse<AccessTokenResponse>>(
+    '/api/users/signin',
+    body,
+    { _skipAuthRefresh: true } as AuthRequestConfig,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '로그인하지 못했습니다.');
+  }
+  setAccessToken(data.data.accessToken);
+  return data.data;
+}
+
+export async function signUp(body: SignupRequest): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    '/api/users/signup',
+    body,
+    { _skipAuthRefresh: true } as AuthRequestConfig,
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '회원가입하지 못했습니다.');
+  }
+}
+
+export async function refreshAccessToken(): Promise<AccessTokenResponse> {
+  const { data } = await api.post<ApiResponse<AccessTokenResponse>>(
+    '/api/users/refresh',
+    undefined,
+    { _skipAuthRefresh: true } as AuthRequestConfig,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '로그인이 필요합니다.');
+  }
+  setAccessToken(data.data.accessToken);
+  return data.data;
+}
+
+export async function fetchMyInfo(): Promise<UserInfoResponse> {
+  const { data } = await api.get<ApiResponse<UserInfoResponse>>('/api/users/me');
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '사용자 정보를 불러오지 못했습니다.');
+  }
+  return data.data;
+}
+
 async function fetchIssues(status: IssueStatus): Promise<IssueSearchResponse> {
   const { data } = await api.get<ApiResponse<IssueSearchResponse>>(
     '/api/issues',

@@ -7,6 +7,7 @@ import com.codesquad.issueTracker.security.JwtHelper;
 import com.codesquad.issueTracker.user.dto.LoginRequest;
 import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.user.dto.TokenResponse;
+import com.codesquad.issueTracker.user.dto.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -59,5 +60,11 @@ public class UserService {
         }
         String accessToken = jwtHelper.createUserAccessToken(requestedUserId);
         return new TokenResponse(accessToken, null);
+    }
+
+    public UserInfoResponse findUserInfo(Long userId) {
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return UserInfoResponse.from(user);
     }
 }
