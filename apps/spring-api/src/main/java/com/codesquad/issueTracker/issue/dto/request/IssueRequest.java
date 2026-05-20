@@ -13,8 +13,8 @@ public record IssueRequest(
         List<Long> labelIds,
         Long milestoneId
 ) {
-    public Issue toEntity() {
-        return new Issue(null, null, title, IssueStatus.OPEN, null, milestoneId, toIssueLabels());
+    public Issue toEntity(Long authorId) {
+        return new Issue(null, authorId, title, IssueStatus.OPEN, null, milestoneId, toIssueLabels());
     }
 
     private Set<IssueLabel> toIssueLabels() {

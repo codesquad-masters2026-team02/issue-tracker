@@ -10,6 +10,7 @@ import {
   fetchMyInfo,
   refreshAccessToken,
   signIn,
+  signOut,
   signUp,
   type LoginRequest,
   type SignupRequest,
@@ -22,6 +23,7 @@ interface AuthContextValue {
   isBootstrapping: boolean;
   login: (body: LoginRequest) => Promise<void>;
   signup: (body: SignupRequest) => Promise<void>;
+  logout: () => Promise<void>;
   clearSession: () => void;
 }
 
@@ -62,8 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     signup: async (body) => {
       await signUp(body);
-      await signIn(body);
-      setUser(await fetchMyInfo());
+    },
+    logout: async () => {
+      try {
+        await signOut();
+      } catch {
+        // The local session should still end if the server-side logout request fails.
+      } finally {
+        setAccessToken(null);
+        setUser(null);
+      }
     },
     clearSession: () => {
       setAccessToken(null);

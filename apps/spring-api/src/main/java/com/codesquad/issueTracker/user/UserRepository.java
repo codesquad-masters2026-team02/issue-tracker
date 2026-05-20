@@ -16,4 +16,8 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
     @Modifying
     @Query("UPDATE users SET refresh_token = :token WHERE id = :id")
     void updateRefreshToken(@Param("id") long id, @Param("token") String token);
+
+    @Modifying
+    @Query("UPDATE users SET refresh_token = null WHERE id = :id")
+    void wipeRefreshToken(@Param("id") Long id);
 }

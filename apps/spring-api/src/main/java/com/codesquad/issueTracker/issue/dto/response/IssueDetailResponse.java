@@ -12,13 +12,20 @@ public record IssueDetailResponse(
         String title,
         IssueStatus status,
         LocalDateTime createdAt,
+        String authorUsername,
         List<LabelSummaryResponse> labels,
         MilestoneSummaryResponse milestone
 ) {
     public static IssueDetailResponse from(Issue issue, List<LabelSummaryResponse> labels,
                                            MilestoneSummaryResponse milestone
     ) {
+        return from(issue, "알 수 없음", labels, milestone);
+    }
+
+    public static IssueDetailResponse from(Issue issue, String authorUsername, List<LabelSummaryResponse> labels,
+                                           MilestoneSummaryResponse milestone
+    ) {
         return new IssueDetailResponse(issue.getId(), issue.getTitle(), issue.getStatus(), issue.getCreatedAt(),
-                labels, milestone);
+                authorUsername, labels, milestone);
     }
 }

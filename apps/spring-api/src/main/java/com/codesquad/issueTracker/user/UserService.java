@@ -67,4 +67,8 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return UserInfoResponse.from(user);
     }
+
+    public void handleLogoutRequest(Long userId) {
+        repository.wipeRefreshToken(userId);
+    }
 }

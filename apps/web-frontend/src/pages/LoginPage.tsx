@@ -1,13 +1,7 @@
 import { type FormEvent, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import './LoginPage.css';
-
-interface LocationState {
-  from?: {
-    pathname?: string;
-  };
-}
 
 function getErrorMessage(caught: unknown) {
   const maybeApiError = caught as {
@@ -28,20 +22,18 @@ function getErrorMessage(caught: unknown) {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isBootstrapping, login, signup } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const state = location.state as LocationState | null;
-  const redirectTo = state?.from?.pathname ?? '/';
   const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting;
 
   if (!isBootstrapping && user) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -49,15 +41,19 @@ export function LoginPage() {
     if (!canSubmit) return;
 
     setError(null);
+    setNotice(null);
     setIsSubmitting(true);
     try {
       const body = { username: username.trim(), password };
       if (mode === 'signin') {
         await login(body);
+        navigate('/', { replace: true });
       } else {
         await signup(body);
+        setMode('signin');
+        setPassword('');
+        setNotice('회원가입이 완료되었습니다. 로그인해주세요.');
       }
-      navigate(redirectTo, { replace: true });
     } catch (caught) {
       setError(getErrorMessage(caught));
     } finally {
@@ -77,7 +73,10 @@ export function LoginPage() {
               type="text"
               value={username}
               autoComplete="username"
-              onChange={(event) => setUsername(event.target.value)}
+              onChange={(event) => {
+                setUsername(event.target.value);
+                setNotice(null);
+              }}
             />
           </label>
 
@@ -87,10 +86,14 @@ export function LoginPage() {
               type="password"
               value={password}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setNotice(null);
+              }}
             />
           </label>
 
+          {notice && <p className="login-form__notice">{notice}</p>}
           {error && <p className="login-form__error">{error}</p>}
 
           <button type="submit" className="btn btn--primary login-form__submit" disabled={!canSubmit}>
@@ -103,6 +106,7 @@ export function LoginPage() {
           className="login-panel__switch"
           onClick={() => {
             setError(null);
+            setNotice(null);
             setMode((current) => (current === 'signin' ? 'signup' : 'signin'));
           }}
         >

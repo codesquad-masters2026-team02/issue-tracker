@@ -19,6 +19,8 @@ import com.codesquad.issueTracker.milestone.Milestone;
 import com.codesquad.issueTracker.milestone.MilestoneRepository;
 import com.codesquad.issueTracker.milestone.MilestoneService;
 import com.codesquad.issueTracker.milestone.dto.MilestoneSummaryResponse;
+import com.codesquad.issueTracker.user.User;
+import com.codesquad.issueTracker.user.UserRepository;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -39,15 +41,16 @@ public class IssueService {
     private final MilestoneRepository milestoneRepository;
     private final CommentService commentService;
     private final IssueResponseMapper issueResponseMapper;
+    private final UserRepository userRepository;
 
 
     @Transactional
-    public IssueDetailResponse create(IssueRequest request) {
-        Issue issue = request.toEntity();
+    public IssueDetailResponse create(IssueRequest request, Long authorId) {
+        Issue issue = request.toEntity(authorId);
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
-        commentService.postComment(saved.getId(),issueBodyRequest,CommentType.ISSUE_BODY);
+        commentService.postComment(saved.getId(), authorId, issueBodyRequest, CommentType.ISSUE_BODY);
 
         List<LabelSummaryResponse> labels = findLabelsByIssueLabels(saved);
 
@@ -57,7 +60,7 @@ public class IssueService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
             milestone = MilestoneSummaryResponse.from(found);
         }
-        return IssueDetailResponse.from(saved, labels, milestone);
+        return IssueDetailResponse.from(saved, findUsername(authorId), labels, milestone);
     }
 
     public IssueSearchResponse getIssues(IssueSearchCondition condition) {
@@ -87,7 +90,7 @@ public class IssueService {
             milestone = MilestoneSummaryResponse.from(found);
         }
 
-        return IssueDetailResponse.from(issue, labels, milestone);
+        return IssueDetailResponse.from(issue, findUsername(issue.getAuthorId()), labels, milestone);
     }
 
     @Transactional
@@ -110,6 +113,16 @@ public class IssueService {
     private Issue findById(Long id) {
         return issueRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+    }
+
+    private String findUsername(Long userId) {
+        if (userId == null) {
+            return "알 수 없음";
+        }
+
+        return userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElse("알 수 없음");
     }
 
     private List<LabelSummaryResponse> findLabelsByIssueLabels(Issue issue) {

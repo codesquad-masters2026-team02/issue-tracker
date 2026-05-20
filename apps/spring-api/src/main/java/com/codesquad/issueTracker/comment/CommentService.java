@@ -6,10 +6,16 @@ import com.codesquad.issueTracker.comment.dto.CommentResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.IssueRepository;
+import com.codesquad.issueTracker.user.User;
+import com.codesquad.issueTracker.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -18,15 +24,16 @@ public class CommentService {
 
     private final CommentRepository commentRepo;
     private final IssueRepository issueRepository;
+    private final UserRepository userRepository;
 
-    public CommentResponse postComment(Long issueId, CommentRequest request, CommentType type){
+    public CommentResponse postComment(Long issueId, Long userId, CommentRequest request, CommentType type){
         if(!issueRepository.existsById(issueId)){
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
         else{
-            Comment newComment = request.toEntity(issueId, type);
+            Comment newComment = request.toEntity(issueId, userId, type);
             Comment savedComment = commentRepo.save(newComment);
-            return new CommentResponse(savedComment);
+            return new CommentResponse(savedComment, findUsername(userId));
         }
     }
 
@@ -36,7 +43,13 @@ public class CommentService {
         }
         else{
             List<Comment> comments = commentRepo.findAllByIssueIdOrderByCreatedAtAsc(issueId);
-            List<CommentResponse> commentResponses = comments.stream().map(CommentResponse::new).toList();
+            Map<Long, User> userMap = findUserMapByComments(comments);
+            List<CommentResponse> commentResponses = comments.stream()
+                    .map(comment -> new CommentResponse(
+                            comment,
+                            usernameOf(userMap.get(comment.getUserId()))
+                    ))
+                    .toList();
             return new CommentListResponse(issueId, commentResponses);
         }
     }
@@ -53,5 +66,34 @@ public class CommentService {
                     throw new BusinessException(ErrorCode.UNAUTHORIZED_MODIFICATION);
                 }
         }
+    }
+
+    private Map<Long, User> findUserMapByComments(List<Comment> comments) {
+        List<Long> userIds = comments.stream()
+                .map(Comment::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private String findUsername(Long userId) {
+        if (userId == null) {
+            return "알 수 없음";
+        }
+
+        return userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElse("알 수 없음");
+    }
+
+    private String usernameOf(User user) {
+        return user == null ? "알 수 없음" : user.getUsername();
     }
 }

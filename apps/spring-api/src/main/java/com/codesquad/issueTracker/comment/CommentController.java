@@ -20,8 +20,13 @@ public class CommentController {
     private final CommentService service;
 
     @PostMapping("/api/issues/{id}/comments")
-    public ResponseEntity<ApiResponse<CommentResponse>> postCommentForIssue(@PathVariable Long id,@RequestBody CommentRequest request){
-        CommentResponse response = service.postComment(id, request, CommentType.DISCUSSION);
+    public ResponseEntity<ApiResponse<CommentResponse>> postCommentForIssue(
+            @PathVariable Long id,
+            @RequestBody CommentRequest request,
+            HttpServletRequest servletRequest
+    ){
+        Long userId = (Long) servletRequest.getAttribute("userId");
+        CommentResponse response = service.postComment(id, userId, request, CommentType.DISCUSSION);
         URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/issues/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(location).body(ApiResponse.ok(response));
     }

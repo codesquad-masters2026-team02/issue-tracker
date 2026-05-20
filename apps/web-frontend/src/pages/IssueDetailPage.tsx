@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
+  getApiErrorMessage,
   useCreateCommentMutation,
   useDeleteCommentMutation,
   useIssueCommentsQuery,
@@ -46,7 +47,7 @@ function CommentCard({
           className="comment-card__avatar"
         />
         <strong className="comment-card__author">
-          {isIssueBody ? '작성자' : '댓글 작성자'}
+          {comment.username}
         </strong>
         <span className="comment-card__time">{formatRelative(comment.created_at)}</span>
         <div className="comment-card__actions">
@@ -198,7 +199,7 @@ export function IssueDetailPage() {
           {isOpen ? '열린 이슈' : '닫힌 이슈'}
         </span>
         <span className="issue-detail__status-text">
-          이 이슈가 {formatRelative(issue.createdAt)}에 작성되었습니다
+          이 이슈가 {formatRelative(issue.createdAt)}에 {issue.authorUsername}님에 의해 작성되었습니다
         </span>
         <span className="issue-detail__status-text">
           코멘트 {discussionComments.length}개
@@ -237,7 +238,7 @@ export function IssueDetailPage() {
           ))}
           {deleteCommentError && (
             <p className="comment-thread__error">
-              {(deleteCommentError as Error).message}
+              {getApiErrorMessage(deleteCommentError, '코멘트를 삭제하지 못했습니다.')}
             </p>
           )}
 
@@ -263,7 +264,7 @@ export function IssueDetailPage() {
           </div>
           {createCommentError && (
             <p className="new-comment__error">
-              {(createCommentError as Error).message}
+              {getApiErrorMessage(createCommentError, '코멘트를 작성하지 못했습니다.')}
             </p>
           )}
           <div className="new-comment__footer">

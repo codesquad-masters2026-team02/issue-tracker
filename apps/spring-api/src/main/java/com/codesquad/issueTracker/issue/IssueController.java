@@ -8,6 +8,7 @@ import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueSummaryResponse;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,12 @@ public class IssueController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<IssueDetailResponse>> createIssue(@RequestBody IssueRequest request) {
-        IssueDetailResponse created = issueService.create(request);
+    public ResponseEntity<ApiResponse<IssueDetailResponse>> createIssue(
+            @RequestBody IssueRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        Long userId = (Long) servletRequest.getAttribute("userId");
+        IssueDetailResponse created = issueService.create(request, userId);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

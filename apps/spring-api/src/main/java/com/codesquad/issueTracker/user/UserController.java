@@ -59,4 +59,20 @@ public class UserController {
         Long userId = (Long) request.getAttribute("userId");
         return ResponseEntity.ok(ApiResponse.ok(service.findUserInfo(userId)));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> handleLogoutRequest(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        service.handleLogoutRequest(userId);
+
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .path("/api/users/refresh")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+                .body(ApiResponse.noContent());
+    }
 }

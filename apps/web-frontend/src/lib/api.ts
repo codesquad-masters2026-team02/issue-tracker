@@ -93,6 +93,7 @@ export interface IssueDetailResponse {
   title: string;
   status: IssueStatus;
   createdAt: string; // ISO date-time
+  authorUsername: string;
   labels: LabelSummaryResponse[];
   milestone?: MilestoneSummaryResponse | null;
 }
@@ -196,6 +197,7 @@ export interface CommentResponse {
   type: CommentType;
   content: string;
   created_at: string; // ISO date-time
+  username: string;
 }
 
 export interface CommentListResponse {
@@ -213,6 +215,23 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: ErrorDto;
+}
+
+export function getApiErrorMessage(caught: unknown, fallback = '오류가 발생했습니다.') {
+  const maybeApiError = caught as {
+    response?: {
+      data?: {
+        error?: ErrorDto;
+      };
+    };
+    message?: string;
+  };
+
+  const apiError = maybeApiError.response?.data?.error;
+  if (apiError?.code && apiError.message) {
+    return `${apiError.code}: ${apiError.message}`;
+  }
+  return apiError?.message ?? maybeApiError.message ?? fallback;
 }
 
 // ----- Endpoints -----
@@ -259,6 +278,13 @@ export async function fetchMyInfo(): Promise<UserInfoResponse> {
     throw new Error(data.error?.message ?? '사용자 정보를 불러오지 못했습니다.');
   }
   return data.data;
+}
+
+export async function signOut(): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>('/api/users/logout');
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '로그아웃하지 못했습니다.');
+  }
 }
 
 async function fetchIssues(status: IssueStatus): Promise<IssueSearchResponse> {
