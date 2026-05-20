@@ -1,4 +1,4 @@
-package com.codesquad.issueTracker.user.dto;
+package com.codesquad.issueTracker.security;
 
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;

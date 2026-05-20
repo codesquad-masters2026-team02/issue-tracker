@@ -2,7 +2,7 @@ package com.codesquad.issueTracker.common.interceptor;
 
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
-import com.codesquad.issueTracker.user.dto.JwtHelper;
+import com.codesquad.issueTracker.security.JwtHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

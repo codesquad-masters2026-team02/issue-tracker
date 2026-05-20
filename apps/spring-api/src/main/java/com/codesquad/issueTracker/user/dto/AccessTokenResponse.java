@@ -1,4 +1,6 @@
 package com.codesquad.issueTracker.user.dto;
 
-public class AccessTokenResponse {
+public record AccessTokenResponse (
+        String accessToken
+){
 }
