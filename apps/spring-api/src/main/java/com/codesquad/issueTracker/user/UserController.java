@@ -1,5 +1,8 @@
 package com.codesquad.issueTracker.user;
 
+import com.codesquad.issueTracker.common.exception.BusinessException;
+import com.codesquad.issueTracker.common.exception.ErrorCode;
+import com.codesquad.issueTracker.user.dto.AccessTokenResponse;
 import com.codesquad.issueTracker.user.dto.LoginRequest;
 import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.common.response.ApiResponse;
@@ -10,10 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -30,18 +30,25 @@ public class UserController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<ApiResponse<String>> postSignInRequest(@RequestBody @Valid LoginRequest request){
+    public ResponseEntity<ApiResponse<AccessTokenResponse>> postSignInRequest(@RequestBody @Valid LoginRequest request){
         TokenResponse response = service.handleLoginRequest(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", response.refreshToken())
                 .httpOnly(true)
-                .secure(true)
+//                .secure(true)
                 .path("/api/users/refresh")
                 .maxAge(14*24*60*60)
-                .sameSite("Strict")
+//                .sameSite("Strict")
                 .build();
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(ApiResponse.ok(response.accessToken()));
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(ApiResponse.ok(new AccessTokenResponse(response.accessToken())));
     }
 
-
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AccessTokenResponse>> refreshAccessToken(@CookieValue(name="refreshToken", required = true) String refreshToken){
+        if(refreshToken.equals("none")){
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        AccessTokenResponse response = new AccessTokenResponse(service.refreshAccessToken(refreshToken).accessToken());
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
 }
