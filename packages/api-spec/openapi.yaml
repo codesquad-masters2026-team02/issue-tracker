@@ -189,6 +189,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseAccessTokenResponse"
+  /api/users/logout:
+    post:
+      tags:
+      - user-controller
+      operationId: handleLogoutRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
   /api/milestones:
     get:
       tags:
@@ -200,10 +212,10 @@ paths:
         required: false
         schema:
           type: string
+          default: OPEN
           enum:
           - OPEN
           - CLOSED
-          default: OPEN
       responses:
         "200":
           description: OK
@@ -335,6 +347,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseCommentResponse"
+  /api/attachments/presign:
+    post:
+      tags:
+      - attachment-controller
+      operationId: presign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePresignResponse"
   /api/issues/{id}:
     get:
       tags:
@@ -621,6 +651,8 @@ components:
         createdAt:
           type: string
           format: date-time
+        authorUsername:
+          type: string
         labels:
           type: array
           items:
@@ -683,6 +715,40 @@ components:
         created_at:
           type: string
           format: date-time
+        username:
+          type: string
+    PresignRequest:
+      required:
+      - contentType
+      - filename
+      - size
+      type: object
+      properties:
+        filename:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+          format: int64
+    ApiResponsePresignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/PresignResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    PresignResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+        attachmentId:
+          type: string
+        publicUrl:
+          type: string
     MilestoneStatusUpdateRequest:
       required:
       - status

@@ -23,7 +23,7 @@ public class Attachment implements Persistable<UUID> {
     private UUID id;
 
     private String s3Key;
-    private String fileName;
+    private String filename;
     private String contentType;
     private Long sizeBytes;
     private AggregateReference<User, Long> uploaderId;
@@ -44,7 +44,7 @@ public class Attachment implements Persistable<UUID> {
         Attachment a = new Attachment();
         a.id = id;
         a.s3Key = s3Key;
-        a.fileName = fileName;
+        a.filename = fileName;
         a.contentType = contentType;
         a.sizeBytes = sizeBytes;
         a.uploaderId = AggregateReference.to(uploaderId);
