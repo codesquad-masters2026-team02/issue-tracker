@@ -71,7 +71,7 @@ CREATE TABLE attachments (
     size_bytes      BIGINT NOT NULL,
 
     uploader_id     BIGINT NOT NULL,
-    comment_id      BIGINT NOT NULL,
+    comment_id      BIGINT,
 
     status          TEXT NOT NULL DEFAULT 'PENDING',
     -- 'PENDING': presign 발급됨, 본문 제출 안 됨
