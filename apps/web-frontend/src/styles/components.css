@@ -58,12 +58,40 @@
 .text-input::placeholder { color: var(--color-text-placeholder); }
 
 .textarea-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg-input);
+  border: 2px solid transparent;
   border-radius: var(--radius-input);
   padding: var(--textarea-padding);
   min-height: var(--textarea-min-height);
+  transition: border-color var(--transition-normal);
+}
+.textarea-wrap--dragging {
+  border-color: var(--color-border-focus);
+}
+.textarea-wrap__drop-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--radius-input) - 2px);
+  background-color: var(--color-primary-50);
+  border: 2px dashed var(--color-interactive-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--color-interactive-primary);
+  font-size: var(--text-body-size);
+  font-weight: var(--font-weight-medium);
+  pointer-events: none;
+  z-index: 1;
+  animation: dropOverlayIn var(--transition-fast) both;
+}
+@keyframes dropOverlayIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
 }
 .text-area {
   flex: 1;
@@ -96,6 +124,11 @@
   align-self: flex-start;
 }
 .textarea-wrap__attach[disabled] { opacity: var(--opacity-disabled); cursor: not-allowed; }
+.textarea-wrap__attach-error {
+  color: var(--color-error);
+  font-size: var(--text-caption-size);
+  margin-top: var(--space-1);
+}
 
 /* 사이드바: 단일 카드 안에 여러 섹션이 구분선으로 나뉨 */
 .sidebar-card {

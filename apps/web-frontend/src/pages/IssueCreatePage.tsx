@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AttachableTextarea } from '../components/AttachableTextarea';
 import { LabelBadge } from '../components/LabelBadge';
 import {
   useCreateIssueMutation,
@@ -58,6 +59,10 @@ export function IssueCreatePage() {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [isLabelMenuOpen]);
 
+  const handleAttach = (publicUrl: string, filename: string) => {
+    setContent((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${publicUrl})`);
+  };
+
   const handleSubmit = () => {
     if (!canSubmit) return;
     mutate(
@@ -90,24 +95,13 @@ export function IssueCreatePage() {
               onChange={(e) => setTitle(e.target.value)}
             />
 
-            <div className="textarea-wrap">
-              <textarea
-                className="text-area"
-                placeholder="코멘트를 입력하세요"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-              />
-              {content.length > 0 && (
-                <div className="textarea-wrap__counter">
-                  띄어쓰기 포함 {content.length}자
-                </div>
-              )}
-              <hr className="textarea-wrap__divider" />
-              <button type="button" className="textarea-wrap__attach">
-                <img src={icon('paperclip')} alt="" width={16} height={16} />
-                파일 첨부하기
-              </button>
-            </div>
+            <AttachableTextarea
+              value={content}
+              onChange={setContent}
+              onAttach={handleAttach}
+              placeholder="코멘트를 입력하세요"
+              disabled={isPending}
+            />
           </div>
         </section>
 

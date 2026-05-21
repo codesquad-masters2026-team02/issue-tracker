@@ -206,6 +206,12 @@ export interface CommentListResponse {
   comments: CommentResponse[];
 }
 
+export interface PresignResponse {
+  uploadUrl: string;
+  attachmentId: string;
+  publicUrl: string;
+}
+
 export interface ErrorDto {
   code?: string;
   message?: string;
@@ -425,6 +431,34 @@ async function createComment(
     throw new Error(data.error?.message ?? '코멘트를 작성하지 못했습니다.');
   }
   return data.data;
+}
+
+async function requestPresign(
+  filename: string,
+  contentType: string,
+  size: number,
+): Promise<PresignResponse> {
+  const { data } = await api.post<ApiResponse<PresignResponse>>(
+    '/api/attachments/presign',
+    { filename, contentType, size },
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '업로드 URL을 가져오지 못했습니다.');
+  }
+  return data.data;
+}
+
+export async function uploadFile(file: File): Promise<PresignResponse> {
+  const presign = await requestPresign(file.name, file.type, file.size);
+  const res = await fetch(presign.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  });
+  if (!res.ok) {
+    throw new Error('파일 업로드에 실패했습니다.');
+  }
+  return presign;
 }
 
 async function deleteComment(commentId: number): Promise<void> {

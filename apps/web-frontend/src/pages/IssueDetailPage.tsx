@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { AttachableTextarea } from '../components/AttachableTextarea';
+import { LabelBadge } from '../components/LabelBadge';
 import {
   getApiErrorMessage,
   useCreateCommentMutation,
@@ -9,7 +11,6 @@ import {
   type CommentResponse,
 } from '../lib/api';
 import { icon } from '../lib/icons';
-import { LabelBadge } from '../components/LabelBadge';
 import './IssueDetailPage.css';
 
 function formatRelative(iso: string) {
@@ -116,6 +117,10 @@ export function IssueDetailPage() {
   }, [commentList]);
 
   const canSubmitComment = newComment.trim().length > 0 && !isCommentPending;
+
+  const handleAttach = (publicUrl: string, filename: string) => {
+    setNewComment((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${publicUrl})`);
+  };
 
   const handleCommentSubmit = () => {
     if (!canSubmitComment) return;
@@ -243,25 +248,13 @@ export function IssueDetailPage() {
           )}
 
           {/* 새 코멘트 */}
-          <div className="textarea-wrap">
-            <textarea
-              className="text-area"
-              placeholder="코멘트를 입력하세요"
-              value={newComment}
-              disabled={isCommentPending}
-              onChange={(e) => setNewComment(e.target.value)}
-            />
-            {newComment.length > 0 && (
-              <div className="textarea-wrap__counter">
-                띄어쓰기 포함 {newComment.length}자
-              </div>
-            )}
-            <hr className="textarea-wrap__divider" />
-            <button type="button" className="textarea-wrap__attach" disabled>
-              <img src={icon('paperclip')} alt="" width={16} height={16} />
-              파일 첨부하기
-            </button>
-          </div>
+          <AttachableTextarea
+            value={newComment}
+            onChange={setNewComment}
+            onAttach={handleAttach}
+            placeholder="코멘트를 입력하세요"
+            disabled={isCommentPending}
+          />
           {createCommentError && (
             <p className="new-comment__error">
               {getApiErrorMessage(createCommentError, '코멘트를 작성하지 못했습니다.')}
