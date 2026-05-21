@@ -28,6 +28,30 @@ public class Issue {
     @MappedCollection(idColumn = "ISSUE_ID")
     private Set<IssueLabel> labels = new HashSet<>();
 
+    @MappedCollection(idColumn = "ISSUE_ID")
+    private Set<IssueUser> users = new HashSet<>();
+
+
+    public void assignUser(Long userId){
+        this.users.add(new IssueUser(userId));
+    }
+
+    public void unassignUser(Long userId){
+        this.users.removeIf(issueUser -> issueUser.userId().equals(userId));
+    }
+
+    public void assignLabel(Long labelId){
+        this.labels.add(new IssueLabel(labelId));
+    }
+
+    public void unassignLabel(Long labelId){
+        this.labels.removeIf(label -> label.labelId().equals(labelId));
+    }
+
+    public void updateMilestone(Long milestoneId){
+        this.milestoneId = milestoneId;
+    }
+
     public void changeStatus(IssueStatus status) {
         this.status = status;
     }

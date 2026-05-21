@@ -11,6 +11,8 @@ import com.codesquad.issueTracker.user.dto.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -36,7 +38,7 @@ public class UserService {
         String password = request.password();
 
         if(!repository.existsUserByUsername(username)){
-            throw new BusinessException(ErrorCode.USERNAME_TAKEN);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         else{
             User possibleUser = repository.findUserByUsername(username);
@@ -70,5 +72,9 @@ public class UserService {
 
     public void handleLogoutRequest(Long userId) {
         repository.wipeRefreshToken(userId);
+    }
+
+    public List<UserInfoResponse> findAllUsers(){
+        return repository.findAll().stream().map(UserInfoResponse::from).toList();
     }
 }

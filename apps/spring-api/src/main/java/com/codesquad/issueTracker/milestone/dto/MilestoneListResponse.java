@@ -10,10 +10,10 @@ public record MilestoneListResponse(
         Integer closedMilestoneCount,
         List<MilestoneResponse> milestones
 ) {
-    public MilestoneListResponse(List<Milestone> milestoneList, int openMilestoneCount, int closedMilestoneCount){
+    public MilestoneListResponse(List<MilestoneResponse> milestoneList,int openMilestoneCount, int closedMilestoneCount){
         this( (openMilestoneCount + closedMilestoneCount),
                 openMilestoneCount,
                 closedMilestoneCount,
-                milestoneList.stream().map(MilestoneResponse::new).toList());
+                milestoneList);
     }
 }

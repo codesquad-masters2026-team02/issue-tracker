@@ -21,7 +21,7 @@ export const api = axios.create({
 interface AuthRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
   _skipAuthRefresh?: boolean;
-}
+}w
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken();

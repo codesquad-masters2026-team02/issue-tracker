@@ -26,6 +26,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if(authHeader == null || !authHeader.startsWith("Bearer ")){
             throw new BusinessException(ErrorCode.LOGIN_REQUIRED);
         }
+
         String token = authHeader.substring(7);
         long userId = jwtHelper.extractUserIdFromToken(token);
         request.setAttribute("userId", userId);

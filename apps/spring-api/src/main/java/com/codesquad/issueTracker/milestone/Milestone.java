@@ -18,8 +18,6 @@ public class Milestone {
     private String name;
     private LocalDate dueDate;
     private String description;
-    private Integer openIssueCount;
-    private Integer closedIssueCount;
     private MilestoneStatus status;
     private Boolean isDeleted;
 

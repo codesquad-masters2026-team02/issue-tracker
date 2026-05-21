@@ -5,14 +5,13 @@ DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS milestones;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS attachments;
+DROP TABLE IF EXISTS issue_user;
 
 CREATE TABLE milestones(
    id BIGINT AUTO_INCREMENT PRIMARY KEY,
    name VARCHAR(100),
    due_date DATE,
    description TEXT,
-   open_issue_count INT,
-   closed_issue_count INT,
    status VARCHAR(50),
    is_deleted BOOLEAN
 );
@@ -62,6 +61,13 @@ CREATE TABLE users(
     profile_image_url VARCHAR(512)
 );
 
+CREATE TABLE issue_user(
+    issue_id BIGINT,
+    user_id BIGINT,
+    PRIMARY KEY (issue_id, user_id),
+    FOREIGN KEY (issue_id) REFERENCES issues(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 CREATE INDEX idx_label_id ON issue_labels (label_id);
 
 CREATE TABLE attachments (

@@ -17,6 +17,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -24,6 +26,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService service;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserInfoResponse>>> getUserList(){
+        return ResponseEntity.ok(ApiResponse.ok(service.findAllUsers()));
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> postSignupRequest(@RequestBody @Valid SignupRequest request){
