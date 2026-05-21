@@ -62,3 +62,21 @@ CREATE TABLE users(
 );
 
 CREATE INDEX idx_label_id ON issue_labels (label_id);
+
+CREATE TABLE attachments (
+    id              UUID PRIMARY KEY,
+    s3_key          TEXT NOT NULL,
+    filename        TEXT NOT NULL,
+    content_type    TEXT NOT NULL,
+    size_bytes      BIGINT NOT NULL,
+
+    uploader_id     BIGINT NOT NULL,
+    comment_id      BIGINT NOT NULL,
+
+    status          TEXT NOT NULL DEFAULT 'PENDING',
+    -- 'PENDING': presign 발급됨, 본문 제출 안 됨
+    -- 'COMMITTED': 이슈/코멘트에 실제로 사용됨
+
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    committed_at    TIMESTAMP
+);

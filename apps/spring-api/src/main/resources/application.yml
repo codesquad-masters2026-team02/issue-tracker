@@ -25,3 +25,10 @@ jwt:
   secret-key: ${JWT_SECRET_KEY:ThisIsALocalSecretKeyForTestingAndThisWillBeReplacedWithSecretKeyInGithubAction}
   access-token-expiration-ms: 3600000
   refresh-token-expiration-ms: 1209600000
+
+aws:
+  s3:
+    bucket: my-issue-tracker-attachments
+    region: ap-northeast-2
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
