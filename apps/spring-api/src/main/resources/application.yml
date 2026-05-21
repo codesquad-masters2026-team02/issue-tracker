@@ -30,5 +30,5 @@ aws:
   s3:
     bucket: issuetracker-uploads-982534372880-ap-northeast-2-an
     region: ap-northeast-2
-    access-key: ${AWS_ACCESS_KEY_ID:dummy-key}}
-    secret-key: ${AWS_SECRET_ACCESS_KEY:dummy-key}}
+    access-key: ${AWS_ACCESS_KEY_ID:dummy-key}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:dummy-key}

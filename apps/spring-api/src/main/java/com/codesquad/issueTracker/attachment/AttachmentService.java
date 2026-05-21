@@ -34,7 +34,6 @@ public class AttachmentService {
 
     public PresignResponse createPresignedUpload(PresignRequest request, Long userId) {
         if (request.size() > MAX_SIZE) {
-            //todo: 에러코드
             throw new BusinessException(ErrorCode.FILE_TOO_LARGE);
         }
         if (!ALLOWED_TYPES.contains(request.contentType())) {
@@ -49,7 +48,6 @@ public class AttachmentService {
                 .bucket(bucket)
                 .key(s3Key)
                 .contentType(request.contentType())
-                .contentLength(request.size())
                 .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
