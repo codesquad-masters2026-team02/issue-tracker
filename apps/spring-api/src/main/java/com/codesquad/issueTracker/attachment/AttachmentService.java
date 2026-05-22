@@ -4,15 +4,20 @@ import com.codesquad.issueTracker.attachment.dto.PresignRequest;
 import com.codesquad.issueTracker.attachment.dto.PresignResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
@@ -63,6 +68,32 @@ public class AttachmentService {
 
         Attachment save = attachmentRepository.save(attachment);
         return new PresignResponse(uploadUrl, attachmentId.toString(), "/api/attachments/" + attachmentId);
+    }
+
+    public String getViewUrl(UUID attachmentId, Long userId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTACHMENT_NOT_FOUND));
+
+        if (attachment.getStatus() == AttachmentStatus.PENDING || attachment.getCommentId() == null) {
+            throw new BusinessException(ErrorCode.ATTACHMENT_ACCESS_DENIED);
+        }
+
+        GetObjectRequest getReq = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(attachment.getS3Key())
+                .responseContentType(attachment.getContentType())
+                .responseContentDisposition(
+                        "inline; filename=\"" +
+                                URLEncoder.encode(attachment.getFilename(), StandardCharsets.UTF_8) +
+                                "\"")
+                .build();
+
+        GetObjectPresignRequest presignReq = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(5))
+                .getObjectRequest(getReq)
+                .build();
+
+        return presigner.presignGetObject(presignReq).url().toString();
     }
 
     private String extractExtension(String filename) {
