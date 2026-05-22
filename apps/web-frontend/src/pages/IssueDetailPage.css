@@ -124,10 +124,30 @@
   padding: 0;
   height: auto;
 }
+.issue-detail__sidebar-error {
+  color: var(--color-text-error);
+  font-size: var(--text-caption-size);
+  line-height: var(--line-height-normal);
+}
 .sidebar-card__items--labels {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.sidebar-user span {
+  overflow-wrap: anywhere;
+}
+.sidebar-user__avatar {
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
 }
 .sidebar-milestone {
   display: flex;

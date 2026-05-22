@@ -21,7 +21,7 @@ export const api = axios.create({
 interface AuthRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
   _skipAuthRefresh?: boolean;
-}w
+}
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
@@ -79,6 +79,12 @@ export interface MilestoneSummaryResponse {
   closedIssueCount: number;
 }
 
+export interface AssigneeSummaryResponse {
+  id: number;
+  username: string;
+  profileImageUrl?: string | null;
+}
+
 export interface IssueSummaryResponse {
   issueNumber: number;
   title: string;
@@ -96,6 +102,7 @@ export interface IssueDetailResponse {
   authorUsername: string;
   labels: LabelSummaryResponse[];
   milestone?: MilestoneSummaryResponse | null;
+  assignees: AssigneeSummaryResponse[];
 }
 
 export interface IssueSearchResponse {
@@ -109,6 +116,7 @@ export interface IssueRequest {
   content: string;
   labelIds?: number[];
   milestoneId?: number | null;
+  userIds?: number[];
 }
 
 export interface BulkIssueRequest {
@@ -320,6 +328,16 @@ async function createIssue(body: IssueRequest): Promise<IssueDetailResponse> {
   return data.data;
 }
 
+async function updateIssueStatus(
+  issueNumber: number,
+  body: { status: IssueStatus },
+): Promise<void> {
+  const { data } = await api.patch<ApiResponse<void>>(`/api/issues/${issueNumber}`, body);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '이슈 상태를 수정하지 못했습니다.');
+  }
+}
+
 async function bulkUpdateIssueStatus(body: BulkIssueRequest): Promise<void> {
   const { data } = await api.patch<ApiResponse<void>>('/api/issues/status', body);
   if (!data.success) {
@@ -333,6 +351,14 @@ async function fetchLabels(): Promise<LabelResponse[]> {
     throw new Error(data.error?.message ?? '레이블 목록을 불러오지 못했습니다.');
   }
   return data.data.labels ?? [];
+}
+
+async function fetchUsers(): Promise<UserInfoResponse[]> {
+  const { data } = await api.get<ApiResponse<UserInfoResponse[]>>('/api/users');
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '사용자 목록을 불러오지 못했습니다.');
+  }
+  return data.data;
 }
 
 async function createLabel(body: LabelRequest): Promise<LabelResponse> {
@@ -468,6 +494,65 @@ async function deleteComment(commentId: number): Promise<void> {
   }
 }
 
+async function addIssueLabels(issueNumber: number, labelIds: number[]): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/labels`,
+    { labelIds },
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '레이블을 추가하지 못했습니다.');
+  }
+}
+
+async function removeIssueLabels(issueNumber: number, labelIds: number[]): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/labels/remove`,
+    { labelIds },
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '레이블을 제거하지 못했습니다.');
+  }
+}
+
+async function setIssueMilestone(issueNumber: number, milestoneId: number): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/milestones`,
+    { milestoneId },
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '마일스톤을 설정하지 못했습니다.');
+  }
+}
+
+async function removeIssueMilestone(issueNumber: number): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/milestones/remove`,
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '마일스톤을 제거하지 못했습니다.');
+  }
+}
+
+async function addIssueAssignees(issueNumber: number, userIds: number[]): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/assignees`,
+    { userIds },
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '담당자를 추가하지 못했습니다.');
+  }
+}
+
+async function removeIssueAssignees(issueNumber: number, userIds: number[]): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>(
+    `/api/issues/${issueNumber}/assignees/remove`,
+    { userIds },
+  );
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '담당자를 제거하지 못했습니다.');
+  }
+}
+
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
@@ -484,6 +569,11 @@ export const labelKeys = {
 export const milestoneKeys = {
   all: ['milestones'] as const,
   list: (status: MilestoneStatus) => [...milestoneKeys.all, 'list', status] as const,
+};
+
+export const userKeys = {
+  all: ['users'] as const,
+  list: () => [...userKeys.all, 'list'] as const,
 };
 
 export function useIssueListQuery(status: IssueStatus = 'OPEN') {
@@ -507,6 +597,19 @@ export function useCreateIssueMutation() {
     mutationFn: createIssue,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.all });
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useUpdateIssueStatusMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { status: IssueStatus }) => updateIssueStatus(issueNumber, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
     },
   });
 }
@@ -517,6 +620,7 @@ export function useBulkUpdateIssueStatusMutation() {
     mutationFn: bulkUpdateIssueStatus,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.all });
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
     },
   });
 }
@@ -525,6 +629,15 @@ export function useLabelListQuery() {
   return useQuery({
     queryKey: labelKeys.list(),
     queryFn: fetchLabels,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
+  });
+}
+
+export function useUserListQuery() {
+  return useQuery({
+    queryKey: userKeys.list(),
+    queryFn: fetchUsers,
     staleTime: Infinity,
     gcTime: 1000 * 60 * 30,
   });
@@ -637,6 +750,74 @@ export function useDeleteCommentMutation(issueNumber: number) {
     mutationFn: deleteComment,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: issueKeys.comments(issueNumber) });
+    },
+  });
+}
+
+export function useAddIssueLabelsMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (labelIds: number[]) => addIssueLabels(issueNumber, labelIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useRemoveIssueLabelsMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (labelIds: number[]) => removeIssueLabels(issueNumber, labelIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useSetIssueMilestoneMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (milestoneId: number) => setIssueMilestone(issueNumber, milestoneId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useRemoveIssueMilestoneMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => removeIssueMilestone(issueNumber),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+      qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useAddIssueAssigneesMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: number[]) => addIssueAssignees(issueNumber, userIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
+    },
+  });
+}
+
+export function useRemoveIssueAssigneesMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: number[]) => removeIssueAssignees(issueNumber, userIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
     },
   });
 }

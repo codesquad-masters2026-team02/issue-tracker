@@ -22,13 +22,12 @@ public interface IssueRepository extends ListCrudRepository<Issue, Long> {
     long countClosedIssuesByMilestoneId(@Param("milestoneId") Long milestoneId);
 
     @Query("""
-        SELECT milestone_id AS milestoneId,
-               SUM(CASE WHEN status = 'OPEN' THEN 1 ELSE 0 END) as openIssueCount,
-               SUM(CASE WHEN status = 'CLOSED' THEN 1 ELSE 0 END) as closedIssueCount
+        SELECT milestone_id,
+               SUM(CASE WHEN status = 'OPEN' THEN 1 ELSE 0 END) AS open_issue_count,
+               SUM(CASE WHEN status = 'CLOSED' THEN 1 ELSE 0 END) AS closed_issue_count
         FROM ISSUES
         WHERE milestone_id IS NOT NULL
         GROUP BY milestone_id
-    
     """)
     List<MilestoneIssueCountDTO> countAllMilestonesIssueCounts();
 

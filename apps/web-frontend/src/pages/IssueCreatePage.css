@@ -46,6 +46,48 @@
   gap: var(--space-2);
 }
 
+.selected-users {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.selected-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.selected-user img {
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+}
+
+.selected-user span {
+  overflow-wrap: anywhere;
+}
+
+.selected-milestone {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.selected-milestone img {
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+.selected-milestone span {
+  overflow-wrap: anywhere;
+}
+
 .label-select {
   position: absolute;
   top: calc(100% - var(--space-2));
