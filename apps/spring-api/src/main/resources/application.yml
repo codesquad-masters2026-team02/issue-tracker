@@ -21,3 +21,14 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
 
+jwt:
+  secret-key: ${JWT_SECRET_KEY:ThisIsALocalSecretKeyForTestingAndThisWillBeReplacedWithSecretKeyInGithubAction}
+  access-token-expiration-ms: 3600000
+  refresh-token-expiration-ms: 1209600000
+
+aws:
+  s3:
+    bucket: issuetracker-uploads-982534372880-ap-northeast-2-an
+    region: ap-northeast-2
+    access-key: ${AWS_ACCESS_KEY_ID:dummy-key}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:dummy-key}

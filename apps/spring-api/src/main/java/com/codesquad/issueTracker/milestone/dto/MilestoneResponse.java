@@ -13,10 +13,10 @@ public record MilestoneResponse(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy. MM. dd")
         LocalDate dueDate,
         MilestoneStatus status,
-        Integer openIssueCount,
-        Integer closedIssueCount
+        Long openIssueCount,
+        Long closedIssueCount
 ) {
-    public MilestoneResponse (Milestone milestone){
-        this(milestone.getId(), milestone.getName(), milestone.getDescription(), milestone.getDueDate(), milestone.getStatus(), milestone.getOpenIssueCount(), milestone.getClosedIssueCount());
+    public MilestoneResponse (Milestone milestone, Long openIssueCount, Long closedIssueCount){
+        this(milestone.getId(), milestone.getName(), milestone.getDescription(), milestone.getDueDate(), milestone.getStatus(), openIssueCount, closedIssueCount);
     }
 }

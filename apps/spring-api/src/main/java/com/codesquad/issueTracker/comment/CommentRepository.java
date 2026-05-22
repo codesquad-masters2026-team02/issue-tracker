@@ -15,6 +15,6 @@ public interface CommentRepository extends ListCrudRepository<Comment,Long> {
     List<Comment> findAllByIssueIdOrderByCreatedAtAsc(@Param("issueId") Long issueId);
 
     @Modifying
-    @Query("DELETE FROM COMMENTS WHERE id = :id")
-    int deleteCommentById(@Param("id") Long id);
+    @Query("DELETE FROM COMMENTS WHERE id = :id AND user_id = :userId")
+    int deleteCommentByIds(@Param("id") Long id, @Param("userId") Long userId);
 }

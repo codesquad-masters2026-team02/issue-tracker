@@ -5,29 +5,28 @@ import com.codesquad.issueTracker.comment.CommentType;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
-import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
-import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
+import com.codesquad.issueTracker.issue.dto.request.*;
+import com.codesquad.issueTracker.issue.dto.response.AssigneeSummaryResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueDetailResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueSummaryResponse;
-import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
-import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import com.codesquad.issueTracker.label.Label;
 import com.codesquad.issueTracker.label.LabelRepository;
 import com.codesquad.issueTracker.label.dto.LabelSummaryResponse;
+import com.codesquad.issueTracker.label.dto.LabelUpdateRequest;
 import com.codesquad.issueTracker.milestone.Milestone;
 import com.codesquad.issueTracker.milestone.MilestoneRepository;
-import com.codesquad.issueTracker.milestone.MilestoneService;
+import com.codesquad.issueTracker.milestone.dto.MilestoneSidebarUpdateRequest;
 import com.codesquad.issueTracker.milestone.dto.MilestoneSummaryResponse;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import com.codesquad.issueTracker.user.User;
+import com.codesquad.issueTracker.user.UserRepository;
+
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -39,25 +38,27 @@ public class IssueService {
     private final MilestoneRepository milestoneRepository;
     private final CommentService commentService;
     private final IssueResponseMapper issueResponseMapper;
+    private final UserRepository userRepository;
 
 
     @Transactional
-    public IssueDetailResponse create(IssueRequest request) {
-        Issue issue = request.toEntity();
+    public IssueDetailResponse create(IssueRequest request, Long authorId) {
+        Issue issue = request.toEntity(authorId);
         Issue saved = issueRepository.save(issue);
 
-        CommentRequest issueBodyRequest = new CommentRequest(request.content());
-        commentService.postComment(saved.getId(),issueBodyRequest,CommentType.ISSUE_BODY);
+        CommentRequest issueBodyRequest = new CommentRequest(request.content(), request.attachmentIds());
+        commentService.postComment(saved.getId(), authorId, issueBodyRequest, CommentType.ISSUE_BODY);
 
         List<LabelSummaryResponse> labels = findLabelsByIssueLabels(saved);
+        List<AssigneeSummaryResponse> assignees = findAssigneeByIssueUser(saved);
 
         MilestoneSummaryResponse milestone = null;
         if (saved.getMilestoneId() != null) {
             Milestone found = milestoneRepository.findActiveMilestoneById(saved.getMilestoneId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
-            milestone = MilestoneSummaryResponse.from(found);
+            milestone = MilestoneSummaryResponse.from(found, issueRepository.countOpenIssuesByMilestoneId(found.getId()), issueRepository.countClosedIssuesByMilestoneId(found.getId()) );
         }
-        return IssueDetailResponse.from(saved, labels, milestone);
+        return IssueDetailResponse.from(saved, findUsername(authorId), labels, milestone, assignees);
     }
 
     public IssueSearchResponse getIssues(IssueSearchCondition condition) {
@@ -78,16 +79,17 @@ public class IssueService {
     public IssueDetailResponse findIssueById(Long id) {
         Issue issue = findById(id);
         List<LabelSummaryResponse> labels = findLabelsByIssueLabels(issue);
+        List<AssigneeSummaryResponse> assignees = findAssigneeByIssueUser(issue);
 
         MilestoneSummaryResponse milestone = null;
 
         if (issue.getMilestoneId() != null) {
             Milestone found = milestoneRepository.findActiveMilestoneById(issue.getMilestoneId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
-            milestone = MilestoneSummaryResponse.from(found);
+            milestone = MilestoneSummaryResponse.from(found, issueRepository.countOpenIssuesByMilestoneId(found.getId()), issueRepository.countClosedIssuesByMilestoneId(found.getId()) );
         }
 
-        return IssueDetailResponse.from(issue, labels, milestone);
+        return IssueDetailResponse.from(issue, findUsername(issue.getAuthorId()), labels, milestone, assignees);
     }
 
     @Transactional
@@ -110,6 +112,16 @@ public class IssueService {
     private Issue findById(Long id) {
         return issueRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+    }
+
+    private String findUsername(Long userId) {
+        if (userId == null) {
+            return "알 수 없음";
+        }
+
+        return userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElse("알 수 없음");
     }
 
     private List<LabelSummaryResponse> findLabelsByIssueLabels(Issue issue) {
@@ -148,4 +160,73 @@ public class IssueService {
         return milestoneRepository.findActiveAllByIds(milestoneIds).stream()
                 .collect(Collectors.toMap(Milestone::getId, Function.identity()));
     }
+
+    private List<AssigneeSummaryResponse> findAssigneeByIssueUser(Issue issue){
+        List<Long> userIds = issue.getUsers().stream().map(IssueUser::userId).toList();
+
+        return userRepository.findAllById(userIds).stream().map(AssigneeSummaryResponse::from).toList();
+    }
+
+    @Transactional
+    public void updateAssignees(Long issueId ,boolean isAssignment, AssigneeUpdateRequest request){
+        Set<Long> requestedIds = new HashSet<>(request.userIds());
+        List<User> targetUsers = userRepository.findAllById(requestedIds);
+
+        if(requestedIds.size() != targetUsers.size()){
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        Issue targetIssue = issueRepository.findById(issueId).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+
+        if(isAssignment){
+            targetUsers.forEach(u -> targetIssue.assignUser(u.getId()));
+        }
+        else{
+            targetUsers.forEach(u -> targetIssue.unassignUser(u.getId()));
+        }
+
+        issueRepository.save(targetIssue);
+    }
+
+    @Transactional
+    public void updateLabel(Long issueId, boolean isAssignment, LabelUpdateRequest request){
+        Set<Long> labelIds = new HashSet<>(request.labelIds());
+        List<Label> targetLabels = labelRepository.findAllById(labelIds);
+
+        if(labelIds.size() != targetLabels.size()){
+            throw new BusinessException(ErrorCode.LABEL_NOT_FOUND);
+        }
+
+        Issue targetIssue = issueRepository.findById(issueId).orElseThrow(()-> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+
+        if(isAssignment){
+            targetLabels.forEach(u -> targetIssue.assignLabel(u.getId()));
+        }
+        else{
+            targetLabels.forEach(u -> targetIssue.unassignLabel(u.getId()));
+        }
+
+        issueRepository.save(targetIssue);
+    }
+
+    @Transactional
+    public void updateMilestone(Long issueId, boolean isAssignment, MilestoneSidebarUpdateRequest request){
+
+        Issue targetIssue = issueRepository.findById(issueId).orElseThrow(() -> new BusinessException(ErrorCode.ISSUE_NOT_FOUND));
+
+        if(request == null){
+            if(!isAssignment) targetIssue.updateMilestone(null);
+        }
+        else{
+            if(isAssignment){
+                Long milestoneId = request.milestoneId();
+                Milestone milestone = milestoneRepository.findActiveMilestoneById(milestoneId).orElseThrow(() -> new BusinessException(ErrorCode.MILESTONE_NOT_FOUND));
+                targetIssue.updateMilestone(milestone.getId());
+            }
+        }
+
+        issueRepository.save(targetIssue);
+    }
+
+
 }

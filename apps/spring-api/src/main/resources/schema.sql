@@ -3,14 +3,15 @@ DROP TABLE IF EXISTS labels;
 DROP TABLE IF EXISTS issue_labels;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS milestones;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS attachments;
+DROP TABLE IF EXISTS issue_user;
 
 CREATE TABLE milestones(
    id BIGINT AUTO_INCREMENT PRIMARY KEY,
    name VARCHAR(100),
    due_date DATE,
    description TEXT,
-   open_issue_count INT,
-   closed_issue_count INT,
    status VARCHAR(50),
    is_deleted BOOLEAN
 );
@@ -49,4 +50,40 @@ CREATE TABLE issue_labels
     FOREIGN KEY (issue_id) REFERENCES issues (id) ON DELETE CASCADE,
     FOREIGN KEY (label_id) REFERENCES labels (id) ON DELETE CASCADE
 );
+
+CREATE TABLE users(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(64),
+    password VARCHAR(128),
+    refresh_token TEXT,
+    oauth_provider VARCHAR(50),
+    oauth_id VARCHAR(255),
+    profile_image_url VARCHAR(512)
+);
+
+CREATE TABLE issue_user(
+    issue_id BIGINT,
+    user_id BIGINT,
+    PRIMARY KEY (issue_id, user_id),
+    FOREIGN KEY (issue_id) REFERENCES issues(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 CREATE INDEX idx_label_id ON issue_labels (label_id);
+
+CREATE TABLE attachments (
+    id              UUID PRIMARY KEY,
+    s3_key          TEXT NOT NULL,
+    filename        TEXT NOT NULL,
+    content_type    TEXT NOT NULL,
+    size_bytes      BIGINT NOT NULL,
+
+    uploader_id     BIGINT NOT NULL,
+    comment_id      BIGINT,
+
+    status          TEXT NOT NULL DEFAULT 'PENDING',
+    -- 'PENDING': presign 발급됨, 본문 제출 안 됨
+    -- 'COMMITTED': 이슈/코멘트에 실제로 사용됨
+
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    committed_at    TIMESTAMP
+);

@@ -5,12 +5,11 @@ import com.codesquad.issueTracker.milestone.Milestone;
 public record MilestoneSummaryResponse(
         Long id,
         String name,
-        Integer openIssueCount,
-        Integer closedIssueCount
+        Long openIssueCount,
+        Long closedIssueCount
 ) {
-    public static MilestoneSummaryResponse from(Milestone milestone) {
-        return new MilestoneSummaryResponse(milestone.getId(), milestone.getName(), milestone.getOpenIssueCount(),
-                milestone.getClosedIssueCount());
+    public static MilestoneSummaryResponse from(Milestone milestone, Long openCount, Long closedCount) {
+        return new MilestoneSummaryResponse(milestone.getId(), milestone.getName(), openCount,closedCount);
     }
 
 }

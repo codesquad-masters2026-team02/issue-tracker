@@ -15,6 +15,6 @@ public record MilestoneRequest (
         LocalDate dueDate
 ){
     public Milestone toEntity(){
-        return new Milestone(null, name, dueDate,description,0,0, MilestoneStatus.OPEN,false);
+        return new Milestone(null, name, dueDate,description, MilestoneStatus.OPEN,false);
     }
 }

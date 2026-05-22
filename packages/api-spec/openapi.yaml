@@ -134,6 +134,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /api/users/signup:
+    post:
+      tags:
+      - user-controller
+      operationId: postSignupRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/users/signin:
+    post:
+      tags:
+      - user-controller
+      operationId: postSignInRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccessTokenResponse"
+  /api/users/refresh:
+    post:
+      tags:
+      - user-controller
+      operationId: refreshAccessToken
+      parameters:
+      - name: refreshToken
+        in: cookie
+        required: false
+        schema:
+          type: string
+          default: none
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccessTokenResponse"
+  /api/users/logout:
+    post:
+      tags:
+      - user-controller
+      operationId: handleLogoutRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
   /api/milestones:
     get:
       tags:
@@ -237,6 +304,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseIssueDetailResponse"
+  /api/issues/{id}/milestones:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateMilestoneByIssueId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneSidebarUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/{id}/milestones/remove:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateRemovedMilestoneByIssueId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/{id}/labels:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateLabelByIssueId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/{id}/labels/remove:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateRemovedLabelsByIssueId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
   /api/issues/{id}/comments:
     get:
       tags:
@@ -280,6 +441,74 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseCommentResponse"
+  /api/issues/{id}/assignees:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateAssignedUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssigneeUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/{id}/assignees/remove:
+    post:
+      tags:
+      - issue-controller
+      operationId: updateUnassignedUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssigneeUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/attachments/presign:
+    post:
+      tags:
+      - attachment-controller
+      operationId: presign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePresignResponse"
   /api/issues/{id}:
     get:
       tags:
@@ -341,6 +570,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /api/users:
+    get:
+      tags:
+      - user-controller
+      operationId: getUserList
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseListUserInfoResponse"
+  /api/users/me:
+    get:
+      tags:
+      - user-controller
+      operationId: getMyInfo
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserInfoResponse"
+  /api/attachments/{id}:
+    get:
+      tags:
+      - attachment-controller
+      operationId: view
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+  /api/attachments/{id}/url:
+    get:
+      tags:
+      - attachment-controller
+      operationId: getPresignedUrl
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
   /api/comments/{id}:
     delete:
       tags:
@@ -412,10 +699,10 @@ components:
           - CLOSED
         openIssueCount:
           type: integer
-          format: int32
+          format: int64
         closedIssueCount:
           type: integer
-          format: int32
+          format: int64
     LabelRequest:
       required:
       - backgroundColor
@@ -461,6 +748,59 @@ components:
           enum:
           - DARK
           - LIGHT
+    SignupRequest:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 32
+          minLength: 4
+          type: string
+        password:
+          maxLength: 64
+          minLength: 8
+          pattern: "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$"
+          type: string
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    LoginRequest:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 32
+          minLength: 4
+          type: string
+        password:
+          maxLength: 64
+          minLength: 8
+          pattern: "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$"
+          type: string
+    AccessTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+    ApiResponseAccessTokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/AccessTokenResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
     IssueRequest:
       type: object
       properties:
@@ -476,6 +816,16 @@ components:
         milestoneId:
           type: integer
           format: int64
+        userIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
     ApiResponseIssueDetailResponse:
       type: object
       properties:
@@ -485,6 +835,16 @@ components:
           $ref: "#/components/schemas/IssueDetailResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
+    AssigneeSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        profileImageUrl:
+          type: string
     IssueDetailResponse:
       type: object
       properties:
@@ -501,12 +861,18 @@ components:
         createdAt:
           type: string
           format: date-time
+        authorUsername:
+          type: string
         labels:
           type: array
           items:
             $ref: "#/components/schemas/LabelSummaryResponse"
         milestone:
           $ref: "#/components/schemas/MilestoneSummaryResponse"
+        assignees:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssigneeSummaryResponse"
     LabelSummaryResponse:
       type: object
       properties:
@@ -532,15 +898,38 @@ components:
           type: string
         openIssueCount:
           type: integer
-          format: int32
+          format: int64
         closedIssueCount:
           type: integer
-          format: int32
+          format: int64
+    MilestoneSidebarUpdateRequest:
+      required:
+      - milestoneId
+      type: object
+      properties:
+        milestoneId:
+          type: integer
+          format: int64
+    LabelUpdateRequest:
+      required:
+      - labelIds
+      type: object
+      properties:
+        labelIds:
+          type: array
+          items:
+            type: integer
+            format: int64
     CommentRequest:
       type: object
       properties:
         content:
           type: string
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
     ApiResponseCommentResponse:
       type: object
       properties:
@@ -550,6 +939,17 @@ components:
           $ref: "#/components/schemas/CommentResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
+    AttachmentSummaryResponse:
+      type: object
+      properties:
+        attachmentId:
+          type: string
+        filename:
+          type: string
+        contentType:
+          type: string
+        publicUrl:
+          type: string
     CommentResponse:
       type: object
       properties:
@@ -563,6 +963,54 @@ components:
         created_at:
           type: string
           format: date-time
+        username:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttachmentSummaryResponse"
+    AssigneeUpdateRequest:
+      required:
+      - userIds
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    PresignRequest:
+      required:
+      - contentType
+      - filename
+      - size
+      type: object
+      properties:
+        filename:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+          format: int64
+    ApiResponsePresignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/PresignResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    PresignResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+        attachmentId:
+          type: string
+        publicUrl:
+          type: string
     MilestoneStatusUpdateRequest:
       required:
       - status
@@ -583,15 +1031,6 @@ components:
           enum:
           - OPEN
           - CLOSED
-    ApiResponseVoid:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: object
-        error:
-          $ref: "#/components/schemas/ErrorDto"
     BulkIssueRequest:
       required:
       - issueIds
@@ -608,6 +1047,36 @@ components:
           enum:
           - OPEN
           - CLOSED
+    ApiResponseListUserInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfoResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
+    UserInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        profileImageUrl:
+          type: string
+    ApiResponseUserInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/UserInfoResponse"
+        error:
+          $ref: "#/components/schemas/ErrorDto"
     ApiResponseMilestoneListResponse:
       type: object
       properties:
@@ -731,3 +1200,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CommentResponse"
+    ApiResponseString:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: string
+        error:
+          $ref: "#/components/schemas/ErrorDto"
