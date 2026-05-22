@@ -21,17 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttachmentController {
     private final AttachmentService attachmentService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Void> view(@PathVariable UUID id, HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute("userId");
-        String presignedUrl = attachmentService.getViewUrl(id, userId);
-
-        return ResponseEntity.status(302)
-                .header("Location", presignedUrl)
-                .header("Cache-Control", "no-store")
-                .build();
-    }
-
     @GetMapping("/{id}/url")
     public ResponseEntity<ApiResponse<String>> getPresignedUrl(
             @PathVariable UUID id, HttpServletRequest request) {
