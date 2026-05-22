@@ -609,6 +609,25 @@ paths:
       responses:
         "200":
           description: OK
+  /api/attachments/{id}/url:
+    get:
+      tags:
+      - attachment-controller
+      operationId: getPresignedUrl
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
   /api/comments/{id}:
     delete:
       tags:
@@ -920,6 +939,17 @@ components:
           $ref: "#/components/schemas/CommentResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
+    AttachmentSummaryResponse:
+      type: object
+      properties:
+        attachmentId:
+          type: string
+        filename:
+          type: string
+        contentType:
+          type: string
+        publicUrl:
+          type: string
     CommentResponse:
       type: object
       properties:
@@ -939,18 +969,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AttachmentSummaryResponse"
-    AttachmentSummaryResponse:
-      type: object
-      properties:
-        attachmentId:
-          type: string
-          format: uuid
-        filename:
-          type: string
-        contentType:
-          type: string
-        publicUrl:
-          type: string
     AssigneeUpdateRequest:
       required:
       - userIds
@@ -1182,3 +1200,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CommentResponse"
+    ApiResponseString:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: string
+        error:
+          $ref: "#/components/schemas/ErrorDto"

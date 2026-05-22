@@ -32,6 +32,14 @@ public class AttachmentController {
                 .build();
     }
 
+    @GetMapping("/{id}/url")
+    public ResponseEntity<ApiResponse<String>> getPresignedUrl(
+            @PathVariable UUID id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        String presignedUrl = attachmentService.getViewUrl(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok(presignedUrl));
+    }
+
     @PostMapping("/presign")
     public ResponseEntity<ApiResponse<PresignResponse>> presign(
             @RequestBody @Valid PresignRequest request,

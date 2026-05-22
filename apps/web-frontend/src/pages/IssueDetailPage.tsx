@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import Markdown, { defaultUrlTransform } from 'react-markdown';
 import { AttachableTextarea } from '../components/AttachableTextarea';
 import { LabelBadge } from '../components/LabelBadge';
 import {
+  fetchAttachmentPresignedUrl,
   getApiErrorMessage,
-  getAttachmentViewUrl,
   useAddIssueAssigneesMutation,
   useAddIssueLabelsMutation,
   useCreateCommentMutation,
@@ -33,6 +34,70 @@ function formatRelative(iso: string) {
   if (diffHour < 24) return `${diffHour}시간 전`;
   return `${Math.floor(diffHour / 24)}일 전`;
 }
+
+const ATTACHMENT_PREFIX = 'attachment:';
+
+function AuthFileLink({ attachmentId, filename }: { attachmentId: string; filename: string }) {
+  const [pending, setPending] = useState(false);
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (pending) return;
+    setPending(true);
+    try {
+      const presignedUrl = await fetchAttachmentPresignedUrl(attachmentId);
+      const a = document.createElement('a');
+      a.href = presignedUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <a href="#" onClick={handleClick} className="comment-content__file">
+      <img src={icon('paperclip')} alt="" width={14} height={14} />
+      {pending ? '다운로드 중…' : filename}
+    </a>
+  );
+}
+
+function AuthImage({ attachmentId, alt }: { attachmentId: string; alt: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchAttachmentPresignedUrl(attachmentId)
+      .then(setSrc)
+      .catch(() => setSrc(null));
+  }, [attachmentId]);
+
+  if (!src) return <span className="comment-content__image-placeholder" />;
+  return (
+    <a href={src} target="_blank" rel="noopener noreferrer">
+      <img src={src} alt={alt} className="comment-content__image" />
+    </a>
+  );
+}
+
+const markdownComponents = {
+  img: ({ src, alt }: { src?: string; alt?: string }) => {
+    if (src?.startsWith(ATTACHMENT_PREFIX)) {
+      const id = src.slice(ATTACHMENT_PREFIX.length);
+      return <AuthImage attachmentId={id} alt={alt ?? ''} />;
+    }
+    return <img src={src} alt={alt} className="comment-content__image" />;
+  },
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+    if (href?.startsWith(ATTACHMENT_PREFIX)) {
+      const id = href.slice(ATTACHMENT_PREFIX.length);
+      return <AuthFileLink attachmentId={id} filename={String(children)} />;
+    }
+    return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+  },
+};
 
 interface CommentCardProps {
   comment: CommentResponse;
@@ -86,7 +151,14 @@ function CommentCard({
       </header>
       <div className="comment-card__body">
         {comment.content.trim() ? (
-          <p className="comment-card__content">{comment.content}</p>
+          <div className="comment-card__content">
+            <Markdown
+              components={markdownComponents}
+              urlTransform={(url) => url.startsWith(ATTACHMENT_PREFIX) ? url : defaultUrlTransform(url)}
+            >
+              {comment.content}
+            </Markdown>
+          </div>
         ) : (
           <p className="comment-card__placeholder">내용이 없습니다.</p>
         )}
@@ -131,6 +203,7 @@ export function IssueDetailPage() {
   const setMilestone = useSetIssueMilestoneMutation(id);
   const removeMilestone = useRemoveIssueMilestoneMutation(id);
   const [newComment, setNewComment] = useState('');
+  const [newCommentAttachmentIds, setNewCommentAttachmentIds] = useState<string[]>([]);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const [openSidebarMenu, setOpenSidebarMenu] = useState<SidebarMenu>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -176,16 +249,26 @@ export function IssueDetailPage() {
   }, [openSidebarMenu]);
 
   const handleAttach = (_publicUrl: string, filename: string, attachmentId: string) => {
-    const viewUrl = getAttachmentViewUrl(attachmentId);
-    setNewComment((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${viewUrl})`);
+    const isImage = /\.(png|jpe?g|gif|webp)$/i.test(filename);
+    const marker = isImage
+      ? `![${filename}](attachment:${attachmentId})`
+      : `[${filename}](attachment:${attachmentId})`;
+    setNewComment((prev) => `${prev}${prev ? '\n' : ''}${marker}`);
+    setNewCommentAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
   const handleCommentSubmit = () => {
     if (!canSubmitComment) return;
     createComment(
-      { content: newComment.trim() },
       {
-        onSuccess: () => setNewComment(''),
+        content: newComment.trim(),
+        attachmentIds: newCommentAttachmentIds.length > 0 ? newCommentAttachmentIds : undefined,
+      },
+      {
+        onSuccess: () => {
+          setNewComment('');
+          setNewCommentAttachmentIds([]);
+        },
       },
     );
   };

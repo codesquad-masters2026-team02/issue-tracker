@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AttachableTextarea } from '../components/AttachableTextarea';
 import { LabelBadge } from '../components/LabelBadge';
 import {
-  getAttachmentViewUrl,
   useCreateIssueMutation,
   useLabelListQuery,
   useMilestoneListQuery,
@@ -91,8 +90,11 @@ export function IssueCreatePage() {
   }, [openSidebarMenu]);
 
   const handleAttach = (_publicUrl: string, filename: string, attachmentId: string) => {
-    const viewUrl = getAttachmentViewUrl(attachmentId);
-    setContent((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${viewUrl})`);
+    const isImage = /\.(png|jpe?g|gif|webp)$/i.test(filename);
+    const marker = isImage
+      ? `![${filename}](attachment:${attachmentId})`
+      : `[${filename}](attachment:${attachmentId})`;
+    setContent((prev) => `${prev}${prev ? '\n' : ''}${marker}`);
     setAttachmentIds((prev) => [...prev, attachmentId]);
   };
 

@@ -120,10 +120,6 @@ export interface IssueRequest {
   attachmentIds?: string[];
 }
 
-export function getAttachmentViewUrl(attachmentId: string): string {
-  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
-  return `${base}/api/attachments/${attachmentId}`;
-}
 
 export interface BulkIssueRequest {
   issueIds: number[];
@@ -202,8 +198,16 @@ export interface MilestoneListResponse {
 
 export type CommentType = 'ISSUE_BODY' | 'DISCUSSION';
 
+export interface AttachmentSummaryResponse {
+  attachmentId: string;
+  filename: string;
+  contentType: string;
+  publicUrl: string;
+}
+
 export interface CommentRequest {
   content: string;
+  attachmentIds?: string[];
 }
 
 export interface CommentResponse {
@@ -212,6 +216,7 @@ export interface CommentResponse {
   content: string;
   created_at: string; // ISO date-time
   username: string;
+  attachments?: AttachmentSummaryResponse[];
 }
 
 export interface CommentListResponse {
@@ -476,6 +481,14 @@ async function requestPresign(
   );
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '업로드 URL을 가져오지 못했습니다.');
+  }
+  return data.data;
+}
+
+export async function fetchAttachmentPresignedUrl(attachmentId: string): Promise<string> {
+  const { data } = await api.get<ApiResponse<string>>(`/api/attachments/${attachmentId}/url`);
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '이미지 URL을 가져오지 못했습니다.');
   }
   return data.data;
 }

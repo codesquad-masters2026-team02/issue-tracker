@@ -16,7 +16,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -71,7 +70,7 @@ public class AttachmentService {
                 attachmentId, s3Key, request.filename(), request.contentType(), request.size(), userId
         );
 
-        Attachment save = attachmentRepository.save(attachment);
+        attachmentRepository.save(attachment);
         return new PresignResponse(uploadUrl, attachmentId.toString(), "/api/attachments/" + attachmentId);
     }
 
