@@ -1,5 +1,7 @@
 package com.codesquad.issueTracker.comment;
 
+import com.codesquad.issueTracker.attachment.AttachmentService;
+import com.codesquad.issueTracker.attachment.dto.AttachmentSummaryResponse;
 import com.codesquad.issueTracker.comment.dto.CommentListResponse;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
 import com.codesquad.issueTracker.comment.dto.CommentResponse;
@@ -25,46 +27,54 @@ public class CommentService {
     private final CommentRepository commentRepo;
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
+    private final AttachmentService attachmentService;
 
-    public CommentResponse postComment(Long issueId, Long userId, CommentRequest request, CommentType type){
-        if(!issueRepository.existsById(issueId)){
+    public CommentResponse postComment(Long issueId, Long userId, CommentRequest request, CommentType type) {
+        if (!issueRepository.existsById(issueId)) {
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
-        else{
-            Comment newComment = request.toEntity(issueId, userId, type);
-            Comment savedComment = commentRepo.save(newComment);
-            return new CommentResponse(savedComment, findUsername(userId));
-        }
+        Comment newComment = request.toEntity(issueId, userId, type);
+        Comment savedComment = commentRepo.save(newComment);
+
+        attachmentService.commitToComment(request.attachmentIds(), userId, savedComment.getId());
+
+        List<AttachmentSummaryResponse> attachments = attachmentService
+                .getSummariesByCommentIds(List.of(savedComment.getId()))
+                .getOrDefault(savedComment.getId(), List.of());
+
+        return new CommentResponse(savedComment, findUsername(userId), attachments);
     }
 
-    public CommentListResponse getCommentListForIssue(Long issueId){
-        if(!issueRepository.existsById(issueId)){
+    public CommentListResponse getCommentListForIssue(Long issueId) {
+        if (!issueRepository.existsById(issueId)) {
             throw new BusinessException(ErrorCode.ISSUE_NOT_FOUND);
         }
-        else{
-            List<Comment> comments = commentRepo.findAllByIssueIdOrderByCreatedAtAsc(issueId);
-            Map<Long, User> userMap = findUserMapByComments(comments);
-            List<CommentResponse> commentResponses = comments.stream()
-                    .map(comment -> new CommentResponse(
-                            comment,
-                            usernameOf(userMap.get(comment.getUserId()))
-                    ))
-                    .toList();
-            return new CommentListResponse(issueId, commentResponses);
-        }
+        List<Comment> comments = commentRepo.findAllByIssueIdOrderByCreatedAtAsc(issueId);
+        Map<Long, User> userMap = findUserMapByComments(comments);
+
+        List<Long> commentIds = comments.stream().map(Comment::getId).toList();
+        Map<Long, List<AttachmentSummaryResponse>> attachmentMap =
+                attachmentService.getSummariesByCommentIds(commentIds);
+
+        List<CommentResponse> commentResponses = comments.stream()
+                .map(comment -> new CommentResponse(
+                        comment,
+                        usernameOf(userMap.get(comment.getUserId())),
+                        attachmentMap.getOrDefault(comment.getId(), List.of())
+                ))
+                .toList();
+        return new CommentListResponse(issueId, commentResponses);
     }
 
-    public void deleteCommentByCommentIds(Long commentId, Long tokenUserId){
-
+    public void deleteCommentByCommentIds(Long commentId, Long tokenUserId) {
         int deletedRows = commentRepo.deleteCommentByIds(commentId, tokenUserId);
 
-        if(deletedRows == 0){
-                if(!commentRepo.existsById(commentId)){
-                    throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
-                }
-                else{
-                    throw new BusinessException(ErrorCode.UNAUTHORIZED_MODIFICATION);
-                }
+        if (deletedRows == 0) {
+            if (!commentRepo.existsById(commentId)) {
+                throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
+            } else {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED_MODIFICATION);
+            }
         }
     }
 

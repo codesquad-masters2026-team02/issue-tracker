@@ -4,6 +4,7 @@ import { AttachableTextarea } from '../components/AttachableTextarea';
 import { LabelBadge } from '../components/LabelBadge';
 import {
   getApiErrorMessage,
+  getAttachmentViewUrl,
   useAddIssueAssigneesMutation,
   useAddIssueLabelsMutation,
   useCreateCommentMutation,
@@ -174,8 +175,9 @@ export function IssueDetailPage() {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [openSidebarMenu]);
 
-  const handleAttach = (publicUrl: string, filename: string) => {
-    setNewComment((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${publicUrl})`);
+  const handleAttach = (_publicUrl: string, filename: string, attachmentId: string) => {
+    const viewUrl = getAttachmentViewUrl(attachmentId);
+    setNewComment((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${viewUrl})`);
   };
 
   const handleCommentSubmit = () => {

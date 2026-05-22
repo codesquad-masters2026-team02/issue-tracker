@@ -9,7 +9,7 @@ const MAX_SIZE = 5 * 1024 * 1024;
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  onAttach: (publicUrl: string, filename: string) => void;
+  onAttach: (publicUrl: string, filename: string, attachmentId: string) => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -56,8 +56,8 @@ export function AttachableTextarea({ value, onChange, onAttach, placeholder, dis
     setUploadError(null);
     setIsUploading(true);
     try {
-      const { publicUrl } = await uploadFile(file);
-      onAttach(publicUrl, file.name);
+      const { publicUrl, attachmentId } = await uploadFile(file);
+      onAttach(publicUrl, file.name, attachmentId);
     } catch (err) {
       setUploadError((err as Error).message ?? '파일 업로드에 실패했습니다.');
     } finally {

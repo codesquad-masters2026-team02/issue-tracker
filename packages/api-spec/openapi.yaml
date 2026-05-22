@@ -212,10 +212,10 @@ paths:
         required: false
         schema:
           type: string
+          default: OPEN
           enum:
           - OPEN
           - CLOSED
-          default: OPEN
       responses:
         "200":
           description: OK
@@ -594,6 +594,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseUserInfoResponse"
+  /api/attachments/{id}:
+    get:
+      tags:
+      - attachment-controller
+      operationId: view
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
   /api/comments/{id}:
     delete:
       tags:
@@ -787,6 +802,11 @@ components:
           items:
             type: integer
             format: int64
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
     ApiResponseIssueDetailResponse:
       type: object
       properties:
@@ -886,6 +906,11 @@ components:
       properties:
         content:
           type: string
+        attachmentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
     ApiResponseCommentResponse:
       type: object
       properties:
@@ -909,6 +934,22 @@ components:
           type: string
           format: date-time
         username:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttachmentSummaryResponse"
+    AttachmentSummaryResponse:
+      type: object
+      properties:
+        attachmentId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        contentType:
+          type: string
+        publicUrl:
           type: string
     AssigneeUpdateRequest:
       required:

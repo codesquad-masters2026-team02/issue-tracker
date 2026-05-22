@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AttachableTextarea } from '../components/AttachableTextarea';
 import { LabelBadge } from '../components/LabelBadge';
 import {
+  getAttachmentViewUrl,
   useCreateIssueMutation,
   useLabelListQuery,
   useMilestoneListQuery,
@@ -39,6 +40,7 @@ export function IssueCreatePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(null);
@@ -88,8 +90,10 @@ export function IssueCreatePage() {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [openSidebarMenu]);
 
-  const handleAttach = (publicUrl: string, filename: string) => {
-    setContent((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${publicUrl})`);
+  const handleAttach = (_publicUrl: string, filename: string, attachmentId: string) => {
+    const viewUrl = getAttachmentViewUrl(attachmentId);
+    setContent((prev) => `${prev}${prev ? '\n' : ''}[${filename}](${viewUrl})`);
+    setAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
   const handleSubmit = () => {
@@ -101,6 +105,7 @@ export function IssueCreatePage() {
         labelIds: selectedLabelIds,
         milestoneId: selectedMilestoneId,
         userIds: selectedAssigneeIds,
+        attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined,
       },
       {
         onSuccess: (issue) => navigate(`/issues/${issue.issueNumber}`),

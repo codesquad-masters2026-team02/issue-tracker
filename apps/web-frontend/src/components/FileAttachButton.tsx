@@ -6,7 +6,7 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'ap
 const MAX_SIZE = 5 * 1024 * 1024;
 
 interface Props {
-  onAttach: (publicUrl: string, filename: string) => void;
+  onAttach: (publicUrl: string, filename: string, attachmentId: string) => void;
   disabled?: boolean;
 }
 
@@ -37,8 +37,8 @@ export function FileAttachButton({ onAttach, disabled }: Props) {
     setError(null);
     setIsUploading(true);
     try {
-      const { publicUrl } = await uploadFile(file);
-      onAttach(publicUrl, file.name);
+      const { publicUrl, attachmentId } = await uploadFile(file);
+      onAttach(publicUrl, file.name, attachmentId);
     } catch (err) {
       setError((err as Error).message ?? '파일 업로드에 실패했습니다.');
     } finally {

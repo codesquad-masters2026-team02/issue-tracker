@@ -117,6 +117,12 @@ export interface IssueRequest {
   labelIds?: number[];
   milestoneId?: number | null;
   userIds?: number[];
+  attachmentIds?: string[];
+}
+
+export function getAttachmentViewUrl(attachmentId: string): string {
+  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+  return `${base}/api/attachments/${attachmentId}`;
 }
 
 export interface BulkIssueRequest {

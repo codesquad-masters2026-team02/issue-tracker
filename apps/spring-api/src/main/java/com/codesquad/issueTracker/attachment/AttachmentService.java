@@ -1,5 +1,6 @@
 package com.codesquad.issueTracker.attachment;
 
+import com.codesquad.issueTracker.attachment.dto.AttachmentSummaryResponse;
 import com.codesquad.issueTracker.attachment.dto.PresignRequest;
 import com.codesquad.issueTracker.attachment.dto.PresignResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
@@ -7,8 +8,12 @@ import com.codesquad.issueTracker.common.exception.ErrorCode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
@@ -94,6 +99,27 @@ public class AttachmentService {
                 .build();
 
         return presigner.presignGetObject(presignReq).url().toString();
+    }
+
+    public void commitToComment(List<UUID> attachmentIds, Long uploaderId, Long commentId) {
+        if (attachmentIds == null || attachmentIds.isEmpty()) return;
+        List<Attachment> attachments = attachmentRepository.findAllById(attachmentIds).stream()
+                .filter(a -> a.getUploaderId().getId().equals(uploaderId))
+                .filter(a -> a.getStatus() == AttachmentStatus.PENDING)
+                .toList();
+        for (Attachment attachment : attachments) {
+            attachment.commit(commentId);
+        }
+        attachmentRepository.saveAll(attachments);
+    }
+
+    public Map<Long, List<AttachmentSummaryResponse>> getSummariesByCommentIds(Collection<Long> commentIds) {
+        if (commentIds.isEmpty()) return Map.of();
+        return attachmentRepository.findAllByCommentIdIn(commentIds).stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getCommentId().getId(),
+                        Collectors.mapping(AttachmentSummaryResponse::from, Collectors.toList())
+                ));
     }
 
     private String extractExtension(String filename) {
