@@ -1,8 +1,12 @@
 package com.codesquad.issueTracker.issue;
 
+import com.codesquad.issueTracker.attachment.Attachment;
+import com.codesquad.issueTracker.attachment.AttachmentRepository;
+import com.codesquad.issueTracker.attachment.AttachmentStatus;
 import com.codesquad.issueTracker.comment.CommentService;
 import com.codesquad.issueTracker.comment.CommentType;
 import com.codesquad.issueTracker.comment.dto.CommentRequest;
+import com.codesquad.issueTracker.comment.dto.CommentResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.issue.dto.request.*;
@@ -39,6 +43,7 @@ public class IssueService {
     private final CommentService commentService;
     private final IssueResponseMapper issueResponseMapper;
     private final UserRepository userRepository;
+    private final AttachmentRepository attachmentRepository;
 
 
     @Transactional
@@ -47,7 +52,10 @@ public class IssueService {
         Issue saved = issueRepository.save(issue);
 
         CommentRequest issueBodyRequest = new CommentRequest(request.content());
-        commentService.postComment(saved.getId(), authorId, issueBodyRequest, CommentType.ISSUE_BODY);
+        CommentResponse commentResponse = commentService.postComment(saved.getId(), authorId, issueBodyRequest,
+                CommentType.ISSUE_BODY);
+
+        commitAttachment(request.attachmentIds(), authorId, commentResponse.id());
 
         List<LabelSummaryResponse> labels = findLabelsByIssueLabels(saved);
         List<AssigneeSummaryResponse> assignees = findAssigneeByIssueUser(saved);
@@ -226,5 +234,19 @@ public class IssueService {
         }
 
         issueRepository.save(targetIssue);
+    }
+
+    private void commitAttachment(List<UUID> attachmentIds, Long authorId, Long commentId) {
+        if (!attachmentIds.isEmpty()) {
+            List<Attachment> attachments = attachmentRepository.findAllById(attachmentIds).stream()
+                    .filter(a -> a.getUploaderId().getId().equals(authorId))
+                    .filter(a -> a.getStatus() == AttachmentStatus.PENDING)
+                    .toList();
+
+            for (Attachment attachment : attachments) {
+                attachment.commit(commentId);
+            }
+            attachmentRepository.saveAll(attachments);
+        }
     }
 }

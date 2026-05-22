@@ -7,6 +7,7 @@ import com.codesquad.issueTracker.issue.IssueUser;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public record IssueRequest(
@@ -14,7 +15,8 @@ public record IssueRequest(
         String content,
         List<Long> labelIds,
         Long milestoneId,
-        List<Long> userIds
+        List<Long> userIds,
+        List<UUID> attachmentIds
 ) {
     public Issue toEntity(Long authorId) {
         return new Issue(null, authorId, title, IssueStatus.OPEN, null, milestoneId, toIssueLabels(), toIssueUsers());
