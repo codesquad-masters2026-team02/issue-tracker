@@ -8,7 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 
-@Table(name = "MILESTONES")
+@Table(name = "milestones")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

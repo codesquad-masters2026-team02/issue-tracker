@@ -17,7 +17,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("ATTACHMENTS")
+@Table("attachments")
 public class Attachment implements Persistable<UUID> {
     @Id
     private UUID id;

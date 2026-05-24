@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("LABELS")
+@Table("labels")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

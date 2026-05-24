@@ -11,7 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("ISSUES")
+@Table("issues")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,10 +25,10 @@ public class Issue {
     private LocalDateTime createdAt;
     private Long milestoneId;
 
-    @MappedCollection(idColumn = "ISSUE_ID")
+    @MappedCollection(idColumn = "issue_id")
     private Set<IssueLabel> labels = new HashSet<>();
 
-    @MappedCollection(idColumn = "ISSUE_ID")
+    @MappedCollection(idColumn = "issue_id")
     private Set<IssueUser> users = new HashSet<>();
 
 

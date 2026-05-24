@@ -35,8 +35,10 @@ dependencies {
 	// AWS S3
 	implementation 'software.amazon.awssdk:s3:2.25.0'
 	implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.0'
+	implementation 'org.flywaydb:flyway-core'
 
-//	runtimeOnly 'com.mysql:mysql-connector-j'
+	runtimeOnly 'org.flywaydb:flyway-mysql'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
