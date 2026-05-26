@@ -82,6 +82,7 @@ export function LoginPage() {
               onClick={handleGithubLogin}
               disabled={isSubmitting}
             >
+              <img src="/github-logo.svg" alt="" width="20" height="20" />
               GitHub 계정으로 로그인
             </button>
 
