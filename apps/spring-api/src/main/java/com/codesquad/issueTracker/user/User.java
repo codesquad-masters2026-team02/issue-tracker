@@ -1,5 +1,6 @@
 package com.codesquad.issueTracker.user;
 
+import com.codesquad.issueTracker.auth.OAuthProvider;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
@@ -14,7 +15,7 @@ public class User {
     private String username;
     private String password;
     private String refresh_token;
-    private String oauthProvider;
+    private OAuthProvider oauthProvider;
     private String oauthId;
     private String profileImageUrl;
 }

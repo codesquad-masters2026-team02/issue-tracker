@@ -24,6 +24,50 @@
   text-align: center;
 }
 
+.btn--github {
+  width: 100%;
+  height: var(--button-height-lg, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 8px);
+  border: 1px solid var(--color-primary-500, #007AFF);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-bg-surface, #fff);
+  color: var(--color-text-primary, #24292f);
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-size);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn--github:hover {
+  background: var(--color-gray-50, #f9fafb);
+  border-color: var(--color-primary-600, #0066d6);
+}
+
+.btn--github:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-panel__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption-size);
+}
+
+.login-panel__divider::before,
+.login-panel__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border, var(--color-gray-200));
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -37,6 +81,17 @@
   color: var(--color-text-secondary);
   font-size: var(--text-caption-size);
   font-weight: var(--font-weight-medium);
+}
+
+.login-field span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .login-field input {

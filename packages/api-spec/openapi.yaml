@@ -491,6 +491,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseVoid"
+  /api/auth/github:
+    post:
+      tags:
+      - o-auth-controller
+      operationId: githubLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GithubLoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccessTokenResponse"
   /api/attachments/presign:
     post:
       tags:
@@ -594,21 +612,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponseUserInfoResponse"
-  /api/attachments/{id}:
-    get:
-      tags:
-      - attachment-controller
-      operationId: view
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        "200":
-          description: OK
   /api/attachments/{id}/url:
     get:
       tags:
@@ -979,6 +982,13 @@ components:
           items:
             type: integer
             format: int64
+    GithubLoginRequest:
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
     PresignRequest:
       required:
       - contentType

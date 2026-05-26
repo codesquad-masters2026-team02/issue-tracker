@@ -7,11 +7,13 @@ import { IssueDetailPage } from './pages/IssueDetailPage';
 import { LabelPage } from './pages/LabelPage';
 import { MilestonePage } from './pages/MilestonePage';
 import { LoginPage } from './pages/LoginPage';
+import { GithubCallbackPage } from './pages/GithubCallbackPage';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/oauth/github/callback" element={<GithubCallbackPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<IssueListPage />} />
