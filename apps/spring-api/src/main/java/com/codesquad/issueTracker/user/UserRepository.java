@@ -1,5 +1,7 @@
 package com.codesquad.issueTracker.user;
 
+import com.codesquad.issueTracker.auth.OAuthProvider;
+import java.util.Optional;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
@@ -20,4 +22,6 @@ public interface UserRepository extends ListCrudRepository<User, Long> {
     @Modifying
     @Query("UPDATE users SET refresh_token = null WHERE id = :id")
     void wipeRefreshToken(@Param("id") Long id);
+
+    Optional<User> findUserByOauthProviderAndOauthId(OAuthProvider oauthProvider, Long oauthId);
 }
