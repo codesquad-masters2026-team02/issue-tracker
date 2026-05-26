@@ -10,6 +10,7 @@ import {
   fetchMyInfo,
   refreshAccessToken,
   signIn,
+  signInWithGithub,
   signOut,
   signUp,
   type LoginRequest,
@@ -22,6 +23,7 @@ interface AuthContextValue {
   user: UserInfoResponse | null;
   isBootstrapping: boolean;
   login: (body: LoginRequest) => Promise<void>;
+  loginWithGithub: (code: string) => Promise<void>;
   signup: (body: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
   clearSession: () => void;
@@ -60,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isBootstrapping,
     login: async (body) => {
       await signIn(body);
+      setUser(await fetchMyInfo());
+    },
+    loginWithGithub: async (code) => {
+      await signInWithGithub(code);
       setUser(await fetchMyInfo());
     },
     signup: async (body) => {

@@ -305,6 +305,19 @@ export async function fetchMyInfo(): Promise<UserInfoResponse> {
   return data.data;
 }
 
+export async function signInWithGithub(code: string): Promise<AccessTokenResponse> {
+  const { data } = await api.post<ApiResponse<AccessTokenResponse>>(
+    '/api/auth/github',
+    { code },
+    { _skipAuthRefresh: true } as AuthRequestConfig,
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? 'GitHub 로그인에 실패했습니다.');
+  }
+  setAccessToken(data.data.accessToken);
+  return data.data;
+}
+
 export async function signOut(): Promise<void> {
   const { data } = await api.post<ApiResponse<void>>('/api/users/logout');
   if (!data.success) {

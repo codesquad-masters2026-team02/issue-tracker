@@ -3,6 +3,9 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import './LoginPage.css';
 
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID ?? '';
+const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI ?? `${window.location.origin}/login`;
+
 function getErrorMessage(caught: unknown) {
   const maybeApiError = caught as {
     response?: {
@@ -36,6 +39,11 @@ export function LoginPage() {
     return <Navigate to="/" replace />;
   }
 
+  const handleGithubLogin = () => {
+    const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}`;
+    window.location.href = url;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmit) return;
@@ -66,12 +74,30 @@ export function LoginPage() {
       <section className="login-panel" aria-label={mode === 'signin' ? '로그인' : '회원가입'}>
         <h1 className="login-panel__logo">Issue Tracker</h1>
 
+        {mode === 'signin' && (
+          <>
+            <button
+              type="button"
+              className="btn btn--github"
+              onClick={handleGithubLogin}
+              disabled={isSubmitting}
+            >
+              GitHub 계정으로 로그인
+            </button>
+
+            <div className="login-panel__divider">
+              <span>or</span>
+            </div>
+          </>
+        )}
+
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="login-field">
             <span>아이디</span>
             <input
               type="text"
               value={username}
+              placeholder="아이디"
               autoComplete="username"
               onChange={(event) => {
                 setUsername(event.target.value);
@@ -85,6 +111,7 @@ export function LoginPage() {
             <input
               type="password"
               value={password}
+              placeholder="비밀번호"
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               onChange={(event) => {
                 setPassword(event.target.value);
