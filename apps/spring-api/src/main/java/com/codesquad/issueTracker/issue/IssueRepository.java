@@ -15,23 +15,23 @@ public interface IssueRepository extends ListCrudRepository<Issue, Long> {
 
     long countByStatus(IssueStatus status);
 
-    @Query("SELECT COUNT(*) FROM ISSUES WHERE milestone_id = :milestoneId AND STATUS = 'OPEN'")
+    @Query("SELECT COUNT(*) FROM issues WHERE milestone_id = :milestoneId AND status = 'OPEN'")
     long countOpenIssuesByMilestoneId(@Param("milestoneId") Long milestoneId);
 
-    @Query("SELECT COUNT(*) FROM ISSUES WHERE milestone_id = :milestoneId AND STATUS = 'CLOSED'")
+    @Query("SELECT COUNT(*) FROM issues WHERE milestone_id = :milestoneId AND status = 'CLOSED'")
     long countClosedIssuesByMilestoneId(@Param("milestoneId") Long milestoneId);
 
     @Query("""
         SELECT milestone_id,
                SUM(CASE WHEN status = 'OPEN' THEN 1 ELSE 0 END) AS open_issue_count,
                SUM(CASE WHEN status = 'CLOSED' THEN 1 ELSE 0 END) AS closed_issue_count
-        FROM ISSUES
+        FROM issues
         WHERE milestone_id IS NOT NULL
         GROUP BY milestone_id
     """)
     List<MilestoneIssueCountDTO> countAllMilestonesIssueCounts();
 
     @Modifying
-    @Query("UPDATE ISSUES SET milestone_id = NULL WHERE milestone_id = :milestoneId")
+    @Query("UPDATE issues SET milestone_id = NULL WHERE milestone_id = :milestoneId")
     long updateMilestoneDeletion(@Param("milestoneId") Long milestoneId);
 }
