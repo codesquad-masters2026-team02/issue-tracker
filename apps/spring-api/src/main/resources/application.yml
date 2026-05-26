@@ -1,14 +1,7 @@
-spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-  h2:
-    console:
-      enabled: true
-  sql:
-    init:
-      mode: always
 
+spring:
+  profiles:
+    active: local
 
 springdoc:
   api-docs:
@@ -23,7 +16,7 @@ app:
 
 jwt:
   secret-key: ${JWT_SECRET_KEY:ThisIsALocalSecretKeyForTestingAndThisWillBeReplacedWithSecretKeyInGithubAction}
-  access-token-expiration-ms: 3600000
+  access-token-expiration-ms: 300000
   refresh-token-expiration-ms: 1209600000
 
 github:
@@ -36,3 +29,33 @@ aws:
     region: ap-northeast-2
     access-key: ${AWS_ACCESS_KEY_ID:dummy-key}
     secret-key: ${AWS_SECRET_ACCESS_KEY:dummy-key}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: true
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:3306/issue_tracker?serverTimezone=UTC&characterEncoding=utf8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: true

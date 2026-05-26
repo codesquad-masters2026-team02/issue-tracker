@@ -11,6 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AttachmentRepository extends ListCrudRepository<Attachment, UUID> {
 
-    @Query("SELECT * FROM ATTACHMENTS WHERE comment_id IN (:commentIds)")
+    @Query("SELECT * FROM attachments WHERE comment_id IN (:commentIds)")
     List<Attachment> findAllByCommentIdIn(@Param("commentIds") Collection<Long> commentIds);
 }
