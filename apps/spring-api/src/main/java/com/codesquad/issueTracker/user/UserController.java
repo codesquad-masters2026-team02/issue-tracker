@@ -8,6 +8,7 @@ import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.user.dto.TokenResponse;
 import com.codesquad.issueTracker.user.dto.UserInfoResponse;
+import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
@@ -81,5 +83,13 @@ public class UserController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
                 .body(ApiResponse.noContent());
+    }
+
+    @PostMapping("/edit")
+    public ResponseEntity<ApiResponse<Void>> editProfile(@RequestPart("file") MultipartFile file, HttpServletRequest servletRequest) {
+        Long userId = (Long) servletRequest.getAttribute("userId");
+
+        service.editProfile(file, userId);
+        return ResponseEntity.ok(ApiResponse.noContent());
     }
 }

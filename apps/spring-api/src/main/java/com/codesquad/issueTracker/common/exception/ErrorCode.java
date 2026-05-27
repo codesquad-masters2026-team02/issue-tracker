@@ -23,7 +23,8 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "갱신 토큰이 올바르지 않습니다"),
     UNAUTHORIZED_MODIFICATION(HttpStatus.FORBIDDEN, "작성자만 삭제할 수 있습니다"),
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE,"최대 파일 크기는 5MB입니다."),
-    UNSUPPORTED_FILE_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 파일 타입");
+    UNSUPPORTED_FILE_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 파일 타입"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드 실패");
     private final HttpStatus status;
     private final String message;
 }

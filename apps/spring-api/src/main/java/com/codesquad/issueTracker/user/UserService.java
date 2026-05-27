@@ -1,5 +1,6 @@
 package com.codesquad.issueTracker.user;
 
+import com.codesquad.issueTracker.attachment.AttachmentService;
 import com.codesquad.issueTracker.auth.GithubOAuthClient;
 import com.codesquad.issueTracker.auth.OAuthProvider;
 import com.codesquad.issueTracker.auth.dto.GithubTokenResponse;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class UserService {
     private final UserRepository repository;
     private final JwtHelper jwtHelper;
     private final GithubOAuthClient githubOAuthClient;
+    private final AttachmentService attachmentService;
 
     public void handleSignupRequest(SignupRequest request) {
         String username = request.username();
@@ -88,8 +91,7 @@ public class UserService {
 
     public TokenResponse refreshAccessToken(String refreshToken) {
         long requestedUserId = jwtHelper.extractUserIdFromToken(refreshToken);
-        User user = repository.findById(requestedUserId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = findById(requestedUserId);
         if (!refreshToken.equals(user.getRefresh_token())) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
@@ -98,8 +100,7 @@ public class UserService {
     }
 
     public UserInfoResponse findUserInfo(Long userId) {
-        User user = repository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = findById(userId);
         return UserInfoResponse.from(user);
     }
 
@@ -109,5 +110,23 @@ public class UserService {
 
     public List<UserInfoResponse> findAllUsers() {
         return repository.findAll().stream().map(UserInfoResponse::from).toList();
+    }
+
+    public void editProfile(MultipartFile file, Long userId) {
+        User user = findById(userId);
+        String s3Key = attachmentService.uploadProfile(file, userId);
+        String oldImage = user.getProfileImageUrl();
+
+        user.editProfile(s3Key);
+        repository.save(user);
+
+        if (oldImage != null) {
+            attachmentService.removeOld(oldImage);
+        }
+    }
+
+    private User findById(Long userId) {
+        return repository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }

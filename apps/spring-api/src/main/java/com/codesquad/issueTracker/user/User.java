@@ -18,4 +18,8 @@ public class User {
     private OAuthProvider oauthProvider;
     private String oauthId;
     private String profileImageUrl;
+
+    public void editProfile(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
 }
