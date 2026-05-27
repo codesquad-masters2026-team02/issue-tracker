@@ -32,8 +32,25 @@ function toTab(value: string | null): Tab {
   return value === 'CLOSED' ? 'CLOSED' : 'OPEN';
 }
 
-function toKeyword(status: Tab) {
-  return `is:issue ${status === 'OPEN' ? 'is:open' : 'is:closed'}`;
+function quoteQueryValue(value: string) {
+  return /\s/.test(value) ? `"${value.replace(/"/g, '\\"')}"` : value;
+}
+
+function toFilterToken(key: 'assignee' | 'label' | 'milestone' | 'author', value: string | number) {
+  return `${key}:${quoteQueryValue(String(value))}`;
+}
+
+function stripConditionTokens(value: string, conditionTokens: string[]) {
+  let next = value;
+  conditionTokens.forEach((token) => {
+    next = next.split(token).join(' ');
+  });
+
+  return next
+    .replace(/\bis:issue\b|\bis:open\b|\bis:closed\b/gi, ' ')
+    .replace(/\b(?:assignee|label|milestone|author):(?:"(?:\\"|[^"])*"|\S+)/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function parsePositiveId(value: string | null) {
@@ -75,7 +92,7 @@ export function IssueListPage() {
     isPending: isBulkStatusPending,
     error: bulkStatusError,
   } = useBulkUpdateIssueStatusMutation();
-  const [keyword, setKeyword] = useState(() => toKeyword(tab));
+  const [titleSearch, setTitleSearch] = useState('');
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [openFilterMenu, setOpenFilterMenu] = useState<FilterMenu>(null);
@@ -104,12 +121,46 @@ export function IssueListPage() {
     );
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   }, [closedMilestoneList, milestoneList]);
+  const userById = useMemo(
+    () => new Map(users.map((user) => [user.id, user])),
+    [users],
+  );
+  const labelById = useMemo(
+    () => new Map(labels.map((label) => [label.labelId, label])),
+    [labels],
+  );
+  const milestoneById = useMemo(
+    () => new Map(sortedMilestones.map((milestone) => [milestone.id, milestone])),
+    [sortedMilestones],
+  );
+  const conditionTokens = useMemo(() => {
+    const tokens = ['is:issue', tab === 'OPEN' ? 'is:open' : 'is:closed'];
+
+    assigneeIds.forEach((id) => {
+      tokens.push(toFilterToken('assignee', userById.get(id)?.username ?? id));
+    });
+    labelIds.forEach((id) => {
+      tokens.push(toFilterToken('label', labelById.get(id)?.name ?? id));
+    });
+    if (milestoneId) {
+      tokens.push(toFilterToken('milestone', milestoneById.get(milestoneId)?.name ?? milestoneId));
+    }
+    if (authorId) {
+      tokens.push(toFilterToken('author', userById.get(authorId)?.username ?? authorId));
+    }
+
+    return tokens;
+  }, [assigneeIds, authorId, labelById, labelIds, milestoneById, milestoneId, tab, userById]);
+  const searchQueryText = useMemo(
+    () => [...conditionTokens, titleSearch].filter(Boolean).join(' '),
+    [conditionTokens, titleSearch],
+  );
   const isMilestonesLoading = isOpenMilestonesLoading || isClosedMilestonesLoading;
   const isMilestonesError = isOpenMilestonesError || isClosedMilestonesError;
 
   const { openCount, closedCount, rows, hasKeywordSearch } = useMemo(() => {
     const base = data?.issues ?? [];
-    const kw = keyword.replace(/is:issue|is:open|is:closed/gi, '').trim().toLowerCase();
+    const kw = titleSearch.trim().toLowerCase();
     const filtered = kw
       ? base.filter((i) => i.title.toLowerCase().includes(kw))
       : base;
@@ -119,7 +170,7 @@ export function IssueListPage() {
       rows: filtered,
       hasKeywordSearch: kw.length > 0,
     };
-  }, [data, keyword]);
+  }, [data, titleSearch]);
 
   const visibleIssueIds = useMemo(
     () => rows.map((issue) => issue.issueNumber),
@@ -169,7 +220,6 @@ export function IssueListPage() {
       next.set('status', 'CLOSED');
     }
     setSearchParams(next);
-    setKeyword(toKeyword(nextTab));
     setSelectedIssueIds(new Set());
     setIsStatusMenuOpen(false);
     setOpenFilterMenu(null);
@@ -254,8 +304,8 @@ export function IssueListPage() {
           <div className="search-pill__input">
             <img src={icon('search')} alt="" width={16} height={16} />
             <input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              value={searchQueryText}
+              onChange={(e) => setTitleSearch(stripConditionTokens(e.target.value, conditionTokens))}
               placeholder="is:issue is:open"
             />
           </div>
