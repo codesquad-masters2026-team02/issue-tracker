@@ -10,6 +10,7 @@ import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.security.PasswordHelper;
 import com.codesquad.issueTracker.security.JwtHelper;
 import com.codesquad.issueTracker.user.dto.LoginRequest;
+import com.codesquad.issueTracker.user.dto.ProfileEditRequest;
 import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.user.dto.TokenResponse;
 import com.codesquad.issueTracker.user.dto.UserInfoResponse;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -112,12 +112,11 @@ public class UserService {
         return repository.findAll().stream().map(UserInfoResponse::from).toList();
     }
 
-    public void editProfile(MultipartFile file, Long userId) {
+    public void editProfile(ProfileEditRequest request, Long userId) {
         User user = findById(userId);
-        String s3Key = attachmentService.uploadProfile(file, userId);
         String oldImage = user.getProfileImageUrl();
 
-        user.editProfile(s3Key);
+        user.editProfile(request.imageUrl());
         repository.save(user);
 
         if (oldImage != null) {

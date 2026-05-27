@@ -5,6 +5,7 @@ import com.codesquad.issueTracker.attachment.dto.PresignRequest;
 import com.codesquad.issueTracker.attachment.dto.PresignResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -62,6 +63,18 @@ public class AttachmentService {
 
         attachmentRepository.save(attachment);
         return new PresignResponse(uploadUrl, attachmentId.toString(), "/api/attachments/" + attachmentId);
+    }
+
+    public PresignResponse createProfilePresignURL(PresignRequest request, Long userId) {
+        if (!PROFILE_ALLOWED_TYPES.contains(request.contentType())) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_FILE_TYPE);
+        }
+        UUID attachmentId = UUID.randomUUID();
+        String extension = extractExtension(request.filename());
+        String s3Key = String.format("profiles/%d%s%s", userId, attachmentId, extension);
+
+        String uploadUrl = getPresignedUrl(request, s3Key);
+        return new PresignResponse(uploadUrl, attachmentId.toString(), "/" + s3Key);
     }
 
     public String getViewUrl(UUID attachmentId, Long userId) {
@@ -129,30 +142,8 @@ public class AttachmentService {
         return presigner.presignPutObject(presignRequest).url().toString();
     }
 
-    public String uploadProfile(MultipartFile file, Long userId) {
-        if (!PROFILE_ALLOWED_TYPES.contains(file.getContentType())) {
-            throw new BusinessException(ErrorCode.UNSUPPORTED_FILE_TYPE);
-        }
-        UUID attachmentId = UUID.randomUUID();
-        String s3Key = String.format("profiles/%d%s", userId, attachmentId);
-
-        try {
-            s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(s3Key)
-                            .contentType(file.getContentType())
-                            .build(),
-                    RequestBody.fromBytes(file.getBytes())
-            );
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
-        }
-
-        return "/" + s3Key;
-    }
     public void removeOld(String profileImageUrl) {
-        if (profileImageUrl.startsWith("/")) {
+        if (profileImageUrl.startsWith("/profiles")) {
             return;
         }
 

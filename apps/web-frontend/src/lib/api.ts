@@ -330,12 +330,27 @@ export async function signInWithGithub(code: string): Promise<AccessTokenRespons
   return data.data;
 }
 
-export async function editProfileImage(file: File): Promise<void> {
-  const formData = new FormData();
-  formData.append('file', file);
-  const { data } = await api.post<ApiResponse<void>>('/api/users/edit', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+export async function uploadProfileImage(file: File): Promise<PresignResponse> {
+  const { data } = await api.post<ApiResponse<PresignResponse>>(
+    '/api/attachments/presign/profile',
+    { filename: file.name, contentType: file.type, size: file.size },
+  );
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message ?? '업로드 URL을 가져오지 못했습니다.');
+  }
+  const res = await fetch(data.data.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
   });
+  if (!res.ok) {
+    throw new Error('파일 업로드에 실패했습니다.');
+  }
+  return data.data;
+}
+
+export async function editProfileImage(imageUrl: string): Promise<void> {
+  const { data } = await api.post<ApiResponse<void>>('/api/users/edit', { imageUrl });
   if (!data.success) {
     throw new Error(data.error?.message ?? '프로필 이미지를 변경하지 못했습니다.');
   }

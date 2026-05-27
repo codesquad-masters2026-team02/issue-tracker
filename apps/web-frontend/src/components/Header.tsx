@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { icon } from '../lib/icons';
 import { useAuth } from '../lib/auth';
-import { editProfileImage } from '../lib/api';
+import { uploadProfileImage, editProfileImage } from '../lib/api';
 import './Header.css';
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -95,7 +95,8 @@ export function Header() {
     setError(null);
 
     try {
-      await editProfileImage(selectedFile);
+      const presign = await uploadProfileImage(selectedFile);
+      await editProfileImage(presign.publicUrl);
       await refreshUser();
       closeModal();
     } catch {

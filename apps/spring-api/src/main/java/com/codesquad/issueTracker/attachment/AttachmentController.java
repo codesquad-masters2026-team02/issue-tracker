@@ -40,4 +40,14 @@ public class AttachmentController {
         PresignResponse presignedUpload = attachmentService.createAttachmentPresignedURL(request, userId);
         return ResponseEntity.ok(ApiResponse.ok(presignedUpload));
     }
+
+    @PostMapping("/presign/profile")
+    public ResponseEntity<ApiResponse<PresignResponse>> presignProfile(
+            @RequestBody @Valid PresignRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        Long userId = (Long) servletRequest.getAttribute("userId");
+        PresignResponse presignedUpload = attachmentService.createProfilePresignURL(request, userId);
+        return ResponseEntity.ok(ApiResponse.ok(presignedUpload));
+    }
 }

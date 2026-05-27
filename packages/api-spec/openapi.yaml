@@ -206,17 +206,12 @@ paths:
       tags:
       - user-controller
       operationId: editProfile
-      requestBody:
-        content:
-          application/json:
-            schema:
-              required:
-              - file
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
+      parameters:
+      - name: request
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/ProfileEditRequest"
       responses:
         "200":
           description: OK
@@ -235,10 +230,10 @@ paths:
         required: false
         schema:
           type: string
+          default: OPEN
           enum:
           - OPEN
           - CLOSED
-          default: OPEN
       responses:
         "200":
           description: OK
@@ -537,6 +532,24 @@ paths:
       tags:
       - attachment-controller
       operationId: presign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePresignResponse"
+  /api/attachments/presign/profile:
+    post:
+      tags:
+      - attachment-controller
+      operationId: presignProfile
       requestBody:
         content:
           application/json:
@@ -852,6 +865,11 @@ components:
           $ref: "#/components/schemas/AccessTokenResponse"
         error:
           $ref: "#/components/schemas/ErrorDto"
+    ProfileEditRequest:
+      type: object
+      properties:
+        publicUrl:
+          type: string
     IssueRequest:
       type: object
       properties:

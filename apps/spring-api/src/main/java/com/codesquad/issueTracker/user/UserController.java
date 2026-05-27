@@ -4,6 +4,7 @@ import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
 import com.codesquad.issueTracker.user.dto.AccessTokenResponse;
 import com.codesquad.issueTracker.user.dto.LoginRequest;
+import com.codesquad.issueTracker.user.dto.ProfileEditRequest;
 import com.codesquad.issueTracker.user.dto.SignupRequest;
 import com.codesquad.issueTracker.common.response.ApiResponse;
 import com.codesquad.issueTracker.user.dto.TokenResponse;
@@ -86,10 +87,10 @@ public class UserController {
     }
 
     @PostMapping("/edit")
-    public ResponseEntity<ApiResponse<Void>> editProfile(@RequestPart("file") MultipartFile file, HttpServletRequest servletRequest) {
+    public ResponseEntity<ApiResponse<Void>> editProfile(@Valid @RequestBody ProfileEditRequest request, HttpServletRequest servletRequest) {
         Long userId = (Long) servletRequest.getAttribute("userId");
 
-        service.editProfile(file, userId);
+        service.editProfile(request, userId);
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 }
