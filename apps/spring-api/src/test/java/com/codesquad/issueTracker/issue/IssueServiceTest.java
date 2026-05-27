@@ -13,6 +13,7 @@ import com.codesquad.issueTracker.issue.dto.request.AssigneeUpdateRequest;
 import com.codesquad.issueTracker.issue.dto.request.BulkIssueRequest;
 import com.codesquad.issueTracker.issue.dto.request.IssueRequest;
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
+import com.codesquad.issueTracker.issue.dto.request.IssueTitleUpdateRequest;
 import com.codesquad.issueTracker.issue.dto.request.UpdateIssueStatusRequest;
 import com.codesquad.issueTracker.issue.dto.response.IssueDetailResponse;
 import com.codesquad.issueTracker.issue.dto.response.IssueSearchResponse;
@@ -122,7 +123,7 @@ class IssueServiceTest {
         );
         issueService.updateStatus(closed.issueNumber(), new UpdateIssueStatusRequest(IssueStatus.CLOSED));
 
-        IssueSearchResponse response = issueService.getIssues(new IssueSearchCondition(IssueStatus.OPEN));
+        IssueSearchResponse response = issueService.getIssues(new IssueSearchCondition(IssueStatus.OPEN, null,null,null,null));
 
         assertThat(response.openIssueCount()).isEqualTo(2);
         assertThat(response.closedIssueCount()).isEqualTo(1);
@@ -146,9 +147,22 @@ class IssueServiceTest {
 
         issueService.bulkUpdateStatus(new BulkIssueRequest(List.of(first.issueNumber(), second.issueNumber()), IssueStatus.CLOSED));
 
-        assertThat(issueService.getIssues(new IssueSearchCondition(IssueStatus.CLOSED)).issues())
+        assertThat(issueService.getIssues(new IssueSearchCondition(IssueStatus.CLOSED, null, null, null,null)).issues())
                 .extracting("issueNumber")
                 .contains(first.issueNumber(), second.issueNumber());
+    }
+
+    @Test
+    void updatesIssueTitle() {
+        User author = userRepository.save(user("title-author"));
+        IssueDetailResponse issue = issueService.create(
+                issueRequest("old title", null),
+                author.getId()
+        );
+
+        issueService.updateTitle(issue.issueNumber(), new IssueTitleUpdateRequest("new title"));
+
+        assertThat(issueService.findIssueById(issue.issueNumber()).title()).isEqualTo("new title");
     }
 
     @Test

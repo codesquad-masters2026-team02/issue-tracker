@@ -212,10 +212,10 @@ paths:
         required: false
         schema:
           type: string
-          default: OPEN
           enum:
           - OPEN
           - CLOSED
+          default: OPEN
       responses:
         "200":
           description: OK
@@ -562,6 +562,31 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateIssueStatusRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/issues/{id}/title:
+    patch:
+      tags:
+      - issue-controller
+      operationId: updateTitle
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueTitleUpdateRequest"
         required: true
       responses:
         "200":
@@ -1041,6 +1066,13 @@ components:
           enum:
           - OPEN
           - CLOSED
+    IssueTitleUpdateRequest:
+      required:
+      - title
+      type: object
+      properties:
+        title:
+          type: string
     BulkIssueRequest:
       required:
       - issueIds
@@ -1136,6 +1168,22 @@ components:
           enum:
           - OPEN
           - CLOSED
+        assigneeIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        labelIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        milestoneId:
+          type: integer
+          format: int64
+        authorId:
+          type: integer
+          format: int64
     ApiResponseIssueSearchResponse:
       type: object
       properties:

@@ -39,7 +39,7 @@ public class IssueService {
     private final CommentService commentService;
     private final IssueResponseMapper issueResponseMapper;
     private final UserRepository userRepository;
-
+    private final IssueFilterRepository filterRepository;
 
     @Transactional
     public IssueDetailResponse create(IssueRequest request, Long authorId) {
@@ -62,9 +62,13 @@ public class IssueService {
     }
 
     public IssueSearchResponse getIssues(IssueSearchCondition condition) {
-        long openIssueCount = issueRepository.countByStatus(IssueStatus.OPEN);
-        long closedIssueCount = issueRepository.countByStatus(IssueStatus.CLOSED);
-        List<Issue> issues = issueRepository.findByStatus(condition.status());
+        long openIssueCount = filterRepository.countIssuesUnderConditionAndStatus(IssueStatus.OPEN,condition);
+        long closedIssueCount = filterRepository.countIssuesUnderConditionAndStatus(IssueStatus.CLOSED, condition);
+
+        List<Long> filteredIssueIds = filterRepository.filterIssueWithSearchCondition(condition);
+        List<Issue> issues = issueRepository.findAllById(filteredIssueIds);
+
+
 
         Map<Long, Label> labelMap = findLabelMapByIssues(issues);
         Map<Long, Milestone> milestoneMap = findMilestoneMapByIssues(issues);
@@ -96,6 +100,13 @@ public class IssueService {
     public void updateStatus(Long id, UpdateIssueStatusRequest request) {
         Issue issue = findById(id);
         issue.changeStatus(request.status());
+        issueRepository.save(issue);
+    }
+
+    @Transactional
+    public void updateTitle(Long id, IssueTitleUpdateRequest request) {
+        Issue issue = findById(id);
+        issue.updateTitle(request.title().trim());
         issueRepository.save(issue);
     }
 

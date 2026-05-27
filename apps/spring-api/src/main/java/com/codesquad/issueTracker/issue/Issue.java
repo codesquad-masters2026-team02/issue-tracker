@@ -52,6 +52,10 @@ public class Issue {
         this.milestoneId = milestoneId;
     }
 
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
     public void changeStatus(IssueStatus status) {
         this.status = status;
     }
