@@ -18,8 +18,11 @@ import {
   useRemoveIssueLabelsMutation,
   useRemoveIssueMilestoneMutation,
   useSetIssueMilestoneMutation,
+  useUpdateIssueStatusMutation,
+  useUpdateIssueTitleMutation,
   useUserListQuery,
   type CommentResponse,
+  type IssueStatus,
 } from '../lib/api';
 import { icon } from '../lib/icons';
 import './IssueDetailPage.css';
@@ -202,10 +205,14 @@ export function IssueDetailPage() {
   const removeLabels = useRemoveIssueLabelsMutation(id);
   const setMilestone = useSetIssueMilestoneMutation(id);
   const removeMilestone = useRemoveIssueMilestoneMutation(id);
+  const updateIssueStatus = useUpdateIssueStatusMutation(id);
+  const updateIssueTitle = useUpdateIssueTitleMutation(id);
   const [newComment, setNewComment] = useState('');
   const [newCommentAttachmentIds, setNewCommentAttachmentIds] = useState<string[]>([]);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const [openSidebarMenu, setOpenSidebarMenu] = useState<SidebarMenu>(null);
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
   const sidebarRef = useRef<HTMLElement>(null);
 
   const { issueBodyComment, discussionComments } = useMemo(() => {
@@ -248,6 +255,11 @@ export function IssueDetailPage() {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [openSidebarMenu]);
 
+  useEffect(() => {
+    if (!issue || isTitleEditing) return;
+    setTitleDraft(issue.title);
+  }, [isTitleEditing, issue]);
+
   const handleAttach = (_publicUrl: string, filename: string, attachmentId: string) => {
     const isImage = /\.(png|jpe?g|gif|webp)$/i.test(filename);
     const marker = isImage
@@ -289,6 +301,8 @@ export function IssueDetailPage() {
     ?? removeLabels.error
     ?? setMilestone.error
     ?? removeMilestone.error;
+  const issueStatusError = updateIssueStatus.error;
+  const issueTitleError = updateIssueTitle.error;
 
   if (isLoading) return <p className="issue-detail__status">불러오는 중…</p>;
   if (isError) {
@@ -315,6 +329,36 @@ export function IssueDetailPage() {
   const isAssigneeUpdating = addAssignees.isPending || removeAssignees.isPending;
   const isLabelUpdating = addLabels.isPending || removeLabels.isPending;
   const isMilestoneUpdating = setMilestone.isPending || removeMilestone.isPending;
+  const isIssueStatusUpdating = updateIssueStatus.isPending;
+  const isIssueTitleUpdating = updateIssueTitle.isPending;
+  const canSaveTitle = titleDraft.trim().length > 0
+    && titleDraft.trim() !== issue.title
+    && !isIssueTitleUpdating;
+
+  const handleTitleEditStart = () => {
+    setTitleDraft(issue.title);
+    setIsTitleEditing(true);
+  };
+
+  const handleTitleEditCancel = () => {
+    setTitleDraft(issue.title);
+    setIsTitleEditing(false);
+  };
+
+  const handleTitleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSaveTitle) return;
+    updateIssueTitle.mutate(
+      { title: titleDraft.trim() },
+      { onSuccess: () => setIsTitleEditing(false) },
+    );
+  };
+
+  const handleIssueStatusToggle = () => {
+    if (isIssueStatusUpdating) return;
+    const nextStatus: IssueStatus = isOpen ? 'CLOSED' : 'OPEN';
+    updateIssueStatus.mutate({ status: nextStatus });
+  };
 
   const handleAssigneeToggle = (userId: number) => {
     if (isAssigneeUpdating) return;
@@ -352,26 +396,66 @@ export function IssueDetailPage() {
     <div className="issue-detail">
       {/* 헤더 */}
       <header className="issue-detail__header">
-        <h1 className="issue-detail__title">
-          {issue.title}
-          <span className="issue-detail__number">#{issue.issueNumber}</span>
-        </h1>
+        {isTitleEditing ? (
+          <form className="issue-detail__title-form" onSubmit={handleTitleSubmit}>
+            <input
+              className="issue-detail__title-input"
+              value={titleDraft}
+              disabled={isIssueTitleUpdating}
+              autoFocus
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  handleTitleEditCancel();
+                }
+              }}
+            />
+            <span className="issue-detail__number">#{issue.issueNumber}</span>
+            <div className="issue-detail__title-actions">
+              <button type="submit" className="btn btn--primary" disabled={!canSaveTitle}>
+                {isIssueTitleUpdating ? '저장 중…' : '저장'}
+              </button>
+              <button
+                type="button"
+                className="btn btn--outline"
+                disabled={isIssueTitleUpdating}
+                onClick={handleTitleEditCancel}
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        ) : (
+          <h1 className="issue-detail__title">
+            {issue.title}
+            <span className="issue-detail__number">#{issue.issueNumber}</span>
+          </h1>
+        )}
         <div className="issue-detail__header-actions">
-          <button type="button" className="btn btn--outline">
+          <button
+            type="button"
+            className="btn btn--outline"
+            disabled={isTitleEditing || isIssueTitleUpdating}
+            onClick={handleTitleEditStart}
+          >
             <img src={icon('edit')} alt="" width={16} height={16} />
             제목 편집
           </button>
-          {/* TODO: 상태 변경 API 추가되면 onClick 으로 toggle */}
-          <button type="button" className="btn btn--outline" disabled title="상태 변경 API 미구현">
+          <button
+            type="button"
+            className="btn btn--outline"
+            disabled={isIssueStatusUpdating}
+            onClick={handleIssueStatusToggle}
+          >
             {isOpen ? (
               <>
                 <img src={icon('archive')} alt="" width={16} height={16} />
-                이슈 닫기
+                {isIssueStatusUpdating ? '닫는 중…' : '이슈 닫기'}
               </>
             ) : (
               <>
                 <img src={icon('alertCircle')} alt="" width={16} height={16} />
-                이슈 열기
+                {isIssueStatusUpdating ? '여는 중…' : '이슈 열기'}
               </>
             )}
           </button>
@@ -397,6 +481,16 @@ export function IssueDetailPage() {
         </span>
       </div>
       <hr className="issue-detail__rule" />
+      {issueStatusError && (
+        <p className="issue-detail__status-error">
+          {getApiErrorMessage(issueStatusError, '이슈 상태를 수정하지 못했습니다.')}
+        </p>
+      )}
+      {issueTitleError && (
+        <p className="issue-detail__status-error">
+          {getApiErrorMessage(issueTitleError, '이슈 제목을 수정하지 못했습니다.')}
+        </p>
+      )}
 
       <div className="issue-detail__body">
         {/* 좌: 콘텐츠 */}

@@ -134,6 +134,10 @@ export interface BulkIssueRequest {
   status: IssueStatus;
 }
 
+export interface IssueTitleUpdateRequest {
+  title: string;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -390,6 +394,16 @@ async function updateIssueStatus(
   const { data } = await api.patch<ApiResponse<void>>(`/api/issues/${issueNumber}`, body);
   if (!data.success) {
     throw new Error(data.error?.message ?? '이슈 상태를 수정하지 못했습니다.');
+  }
+}
+
+async function updateIssueTitle(
+  issueNumber: number,
+  body: IssueTitleUpdateRequest,
+): Promise<void> {
+  const { data } = await api.patch<ApiResponse<void>>(`/api/issues/${issueNumber}/title`, body);
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '이슈 제목을 수정하지 못했습니다.');
   }
 }
 
@@ -673,6 +687,17 @@ export function useUpdateIssueStatusMutation(issueNumber: number) {
       qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
       qc.invalidateQueries({ queryKey: issueKeys.all });
       qc.invalidateQueries({ queryKey: milestoneKeys.all });
+    },
+  });
+}
+
+export function useUpdateIssueTitleMutation(issueNumber: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: IssueTitleUpdateRequest) => updateIssueTitle(issueNumber, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKeys.detail(issueNumber) });
+      qc.invalidateQueries({ queryKey: issueKeys.all });
     },
   });
 }

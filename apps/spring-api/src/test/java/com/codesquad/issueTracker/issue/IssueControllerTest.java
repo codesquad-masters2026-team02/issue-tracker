@@ -3,6 +3,7 @@ package com.codesquad.issueTracker.issue;
 import static com.codesquad.issueTracker.TestFixtures.label;
 import static com.codesquad.issueTracker.TestFixtures.milestone;
 import static com.codesquad.issueTracker.TestFixtures.user;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -132,6 +133,15 @@ class IssueControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
+        mockMvc.perform(patch("/api/issues/{id}/title", issue.issueNumber())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(author))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"updated sidebar api"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
         mockMvc.perform(post("/api/issues/{id}/assignees", issue.issueNumber())
                         .header(HttpHeaders.AUTHORIZATION, bearer(author))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,6 +162,9 @@ class IssueControllerTest {
                         .content("{\"milestoneId\":" + milestone.getId() + "}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+
+        IssueDetailResponse updated = issueService.findIssueById(issue.issueNumber());
+        assertThat(updated.title()).isEqualTo("updated sidebar api");
     }
 
     private String bearer(User user) {

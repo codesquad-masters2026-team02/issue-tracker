@@ -1,11 +1,13 @@
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   fetchMyInfo,
   refreshAccessToken,
@@ -16,6 +18,7 @@ import {
   type LoginRequest,
   type SignupRequest,
   type UserInfoResponse,
+  userKeys,
 } from './api';
 import { setAccessToken } from './authToken';
 
@@ -32,8 +35,18 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserInfoResponse | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+
+  const cacheCurrentUser = useCallback((me: UserInfoResponse) => {
+    queryClient.setQueryData<UserInfoResponse[]>(userKeys.list(), (current = []) => (
+      current.some((cachedUser) => cachedUser.id === me.id)
+        ? current
+        : [...current, me]
+    ));
+    queryClient.invalidateQueries({ queryKey: userKeys.all });
+  }, [queryClient]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +55,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await refreshAccessToken();
         const me = await fetchMyInfo();
-        if (!cancelled) setUser(me);
+        if (!cancelled) {
+          setUser(me);
+          cacheCurrentUser(me);
+        }
       } catch {
         setAccessToken(null);
-        if (!cancelled) setUser(null);
+        if (!cancelled) {
+          setUser(null);
+          queryClient.clear();
+        }
       } finally {
         if (!cancelled) setIsBootstrapping(false);
       }
@@ -55,18 +74,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [cacheCurrentUser, queryClient]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
     isBootstrapping,
     login: async (body) => {
       await signIn(body);
-      setUser(await fetchMyInfo());
+      const me = await fetchMyInfo();
+      setUser(me);
+      cacheCurrentUser(me);
     },
     loginWithGithub: async (code) => {
       await signInWithGithub(code);
-      setUser(await fetchMyInfo());
+      const me = await fetchMyInfo();
+      setUser(me);
+      cacheCurrentUser(me);
     },
     signup: async (body) => {
       await signUp(body);
@@ -79,13 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } finally {
         setAccessToken(null);
         setUser(null);
+        queryClient.clear();
       }
     },
     clearSession: () => {
       setAccessToken(null);
       setUser(null);
+      queryClient.clear();
     },
-  }), [isBootstrapping, user]);
+  }), [cacheCurrentUser, isBootstrapping, queryClient, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

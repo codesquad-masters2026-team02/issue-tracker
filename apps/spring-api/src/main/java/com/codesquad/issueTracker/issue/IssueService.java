@@ -104,6 +104,13 @@ public class IssueService {
     }
 
     @Transactional
+    public void updateTitle(Long id, IssueTitleUpdateRequest request) {
+        Issue issue = findById(id);
+        issue.updateTitle(request.title().trim());
+        issueRepository.save(issue);
+    }
+
+    @Transactional
     public void bulkUpdateStatus(BulkIssueRequest request) {
         List<Issue> issues = issueRepository.findAllById(request.issueIds());
 

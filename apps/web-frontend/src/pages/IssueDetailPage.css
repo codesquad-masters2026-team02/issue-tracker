@@ -1,6 +1,10 @@
 .issue-detail { display: flex; flex-direction: column; gap: var(--space-4); }
 .issue-detail__status { padding: var(--space-12); text-align: center; color: var(--color-text-tertiary); }
 .issue-detail__status--error { color: var(--color-text-error); }
+.issue-detail__status-error {
+  color: var(--color-text-error);
+  font-size: var(--text-caption-size);
+}
 
 .issue-detail__header {
   display: flex; align-items: center; justify-content: space-between;
@@ -11,6 +15,35 @@
   font-weight: var(--text-heading-weight);
   color: var(--color-text-primary);
   display: flex; align-items: baseline; gap: var(--space-3);
+}
+.issue-detail__title-form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.issue-detail__title-input {
+  flex: 1;
+  min-width: 180px;
+  height: var(--input-height);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-input-focus);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+}
+.issue-detail__title-input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+.issue-detail__title-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 .issue-detail__number {
   color: var(--color-text-tertiary);

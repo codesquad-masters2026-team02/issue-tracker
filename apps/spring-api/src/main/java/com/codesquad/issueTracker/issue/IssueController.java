@@ -61,6 +61,15 @@ public class IssueController {
         return ResponseEntity.ok(ApiResponse.noContent());
     }
 
+    @PatchMapping("/{id}/title")
+    public ResponseEntity<ApiResponse<Void>> updateTitle(
+            @PathVariable Long id,
+            @Valid @RequestBody IssueTitleUpdateRequest request
+    ) {
+        issueService.updateTitle(id, request);
+        return ResponseEntity.ok(ApiResponse.noContent());
+    }
+
 
     @PatchMapping("/status")
     public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(@Valid @RequestBody BulkIssueRequest request) {
