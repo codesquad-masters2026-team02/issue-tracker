@@ -111,6 +111,14 @@ export interface IssueSearchResponse {
   issues: IssueSummaryResponse[];
 }
 
+export interface IssueListFilters {
+  status?: IssueStatus;
+  assigneeIds?: number[];
+  labelIds?: number[];
+  milestoneId?: number;
+  authorId?: number;
+}
+
 export interface IssueRequest {
   title: string;
   content: string;
@@ -325,10 +333,33 @@ export async function signOut(): Promise<void> {
   }
 }
 
-async function fetchIssues(status: IssueStatus): Promise<IssueSearchResponse> {
+function normalizeIssueFilters(filters: IssueListFilters = {}): Required<IssueListFilters> {
+  return {
+    status: filters.status ?? 'OPEN',
+    assigneeIds: filters.assigneeIds ?? [],
+    labelIds: filters.labelIds ?? [],
+    milestoneId: filters.milestoneId ?? 0,
+    authorId: filters.authorId ?? 0,
+  };
+}
+
+function toIssueFilterParams(filters: IssueListFilters = {}) {
+  const normalized = normalizeIssueFilters(filters);
+  const params = new URLSearchParams();
+
+  params.set('status', normalized.status);
+  normalized.assigneeIds.forEach((id) => params.append('assigneeIds', String(id)));
+  normalized.labelIds.forEach((id) => params.append('labelIds', String(id)));
+  if (normalized.milestoneId > 0) params.set('milestoneId', String(normalized.milestoneId));
+  if (normalized.authorId > 0) params.set('authorId', String(normalized.authorId));
+
+  return params;
+}
+
+async function fetchIssues(filters: IssueListFilters = {}): Promise<IssueSearchResponse> {
   const { data } = await api.get<ApiResponse<IssueSearchResponse>>(
     '/api/issues',
-    { params: { status } },
+    { params: toIssueFilterParams(filters) },
   );
   if (!data.success || !data.data) {
     throw new Error(data.error?.message ?? '이슈 목록을 불러오지 못했습니다.');
@@ -588,7 +619,7 @@ async function removeIssueAssignees(issueNumber: number, userIds: number[]): Pro
 // ----- Hooks -----
 export const issueKeys = {
   all: ['issues'] as const,
-  list: (status: IssueStatus) => [...issueKeys.all, 'list', status] as const,
+  list: (filters: IssueListFilters = {}) => [...issueKeys.all, 'list', normalizeIssueFilters(filters)] as const,
   detail: (id: number) => [...issueKeys.all, 'detail', id] as const,
   comments: (id: number) => [...issueKeys.detail(id), 'comments'] as const,
 };
@@ -608,10 +639,10 @@ export const userKeys = {
   list: () => [...userKeys.all, 'list'] as const,
 };
 
-export function useIssueListQuery(status: IssueStatus = 'OPEN') {
+export function useIssueListQuery(filters: IssueListFilters = {}) {
   return useQuery({
-    queryKey: issueKeys.list(status),
-    queryFn: () => fetchIssues(status),
+    queryKey: issueKeys.list(filters),
+    queryFn: () => fetchIssues(filters),
   });
 }
 

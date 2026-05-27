@@ -5,6 +5,8 @@ import {
   useIssueListQuery,
   useLabelListQuery,
   useMilestoneListQuery,
+  useUserListQuery,
+  type IssueListFilters,
   type IssueStatus,
 } from '../lib/api';
 import { icon } from '../lib/icons';
@@ -24,6 +26,7 @@ function formatRelative(iso: string) {
 }
 
 type Tab = IssueStatus;
+type FilterMenu = 'assignees' | 'labels' | 'milestones' | 'authors' | null;
 
 function toTab(value: string | null): Tab {
   return value === 'CLOSED' ? 'CLOSED' : 'OPEN';
@@ -33,12 +36,40 @@ function toKeyword(status: Tab) {
   return `is:issue ${status === 'OPEN' ? 'is:open' : 'is:closed'}`;
 }
 
+function parsePositiveId(value: string | null) {
+  if (!value) return undefined;
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : undefined;
+}
+
+function parsePositiveIds(searchParams: URLSearchParams, key: string) {
+  return [...new Set(
+    searchParams
+      .getAll(key)
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0),
+  )];
+}
+
 export function IssueListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = toTab(searchParams.get('status'));
-  const { data, isLoading, isError, error } = useIssueListQuery(tab);
+  const assigneeIds = useMemo(() => parsePositiveIds(searchParams, 'assigneeIds'), [searchParams]);
+  const labelIds = useMemo(() => parsePositiveIds(searchParams, 'labelIds'), [searchParams]);
+  const milestoneId = parsePositiveId(searchParams.get('milestoneId'));
+  const authorId = parsePositiveId(searchParams.get('authorId'));
+  const issueFilters = useMemo<IssueListFilters>(() => ({
+    status: tab,
+    assigneeIds,
+    labelIds,
+    milestoneId,
+    authorId,
+  }), [assigneeIds, authorId, labelIds, milestoneId, tab]);
+  const { data, isLoading, isError, error } = useIssueListQuery(issueFilters);
   const { data: labels = [] } = useLabelListQuery();
-  const { data: milestoneList } = useMilestoneListQuery();
+  const { data: users = [], isLoading: isUsersLoading, isError: isUsersError } = useUserListQuery();
+  const { data: milestoneList, isLoading: isOpenMilestonesLoading, isError: isOpenMilestonesError } = useMilestoneListQuery('OPEN');
+  const { data: closedMilestoneList, isLoading: isClosedMilestonesLoading, isError: isClosedMilestonesError } = useMilestoneListQuery('CLOSED');
   const {
     mutate: bulkUpdateIssueStatus,
     isPending: isBulkStatusPending,
@@ -47,10 +78,36 @@ export function IssueListPage() {
   const [keyword, setKeyword] = useState(() => toKeyword(tab));
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [openFilterMenu, setOpenFilterMenu] = useState<FilterMenu>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
+  const selectedAssigneeIds = useMemo(() => new Set(assigneeIds), [assigneeIds]);
+  const selectedLabelIds = useMemo(() => new Set(labelIds), [labelIds]);
+  const hasActiveIssueFilters = assigneeIds.length > 0
+    || labelIds.length > 0
+    || Boolean(milestoneId)
+    || Boolean(authorId);
 
-  const { openCount, closedCount, rows } = useMemo(() => {
+  const sortedUsers = useMemo(
+    () => [...users].sort((a, b) => a.username.localeCompare(b.username, 'ko')),
+    [users],
+  );
+  const sortedLabels = useMemo(
+    () => [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    [labels],
+  );
+  const sortedMilestones = useMemo(() => {
+    const byId = new Map(
+      [...(milestoneList?.milestones ?? []), ...(closedMilestoneList?.milestones ?? [])]
+        .map((milestone) => [milestone.id, milestone]),
+    );
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  }, [closedMilestoneList, milestoneList]);
+  const isMilestonesLoading = isOpenMilestonesLoading || isClosedMilestonesLoading;
+  const isMilestonesError = isOpenMilestonesError || isClosedMilestonesError;
+
+  const { openCount, closedCount, rows, hasKeywordSearch } = useMemo(() => {
     const base = data?.issues ?? [];
     const kw = keyword.replace(/is:issue|is:open|is:closed/gi, '').trim().toLowerCase();
     const filtered = kw
@@ -60,6 +117,7 @@ export function IssueListPage() {
       openCount: data?.openIssueCount ?? 0,
       closedCount: data?.closedIssueCount ?? 0,
       rows: filtered,
+      hasKeywordSearch: kw.length > 0,
     };
   }, [data, keyword]);
 
@@ -85,11 +143,71 @@ export function IssueListPage() {
     });
   }, [visibleIssueIds]);
 
+  useEffect(() => {
+    if (!openFilterMenu) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Node
+        && filtersRef.current
+        && !filtersRef.current.contains(target)
+      ) {
+        setOpenFilterMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [openFilterMenu]);
+
   const handleTabClick = (nextTab: Tab) => {
-    setSearchParams(nextTab === 'OPEN' ? {} : { status: 'CLOSED' });
+    const next = new URLSearchParams(searchParams);
+    if (nextTab === 'OPEN') {
+      next.delete('status');
+    } else {
+      next.set('status', 'CLOSED');
+    }
+    setSearchParams(next);
     setKeyword(toKeyword(nextTab));
     setSelectedIssueIds(new Set());
     setIsStatusMenuOpen(false);
+    setOpenFilterMenu(null);
+  };
+
+  const updateFilters = (updater: (next: URLSearchParams) => void) => {
+    const next = new URLSearchParams(searchParams);
+    updater(next);
+    setSearchParams(next);
+    setSelectedIssueIds(new Set());
+  };
+
+  const clearFilterParam = (key: 'assigneeIds' | 'labelIds' | 'milestoneId' | 'authorId') => {
+    updateFilters((next) => next.delete(key));
+  };
+
+  const toggleListFilter = (key: 'assigneeIds' | 'labelIds', id: number) => {
+    updateFilters((next) => {
+      const current = parsePositiveIds(next, key);
+      const nextIds = current.includes(id)
+        ? current.filter((currentId) => currentId !== id)
+        : [...current, id];
+
+      next.delete(key);
+      nextIds.forEach((nextId) => next.append(key, String(nextId)));
+    });
+  };
+
+  const toggleSingleFilter = (key: 'milestoneId' | 'authorId', id: number) => {
+    updateFilters((next) => {
+      const currentId = parsePositiveId(next.get(key));
+      if (currentId === id) {
+        next.delete(key);
+      } else {
+        next.set(key, String(id));
+      }
+    });
+    setOpenFilterMenu(null);
   };
 
   const handleSelectAllChange = () => {
@@ -235,13 +353,196 @@ export function IssueListPage() {
                   닫힌 이슈({closedCount})
                 </button>
               </div>
-              <div className="issue-table__filters">
-                {(['담당자', '레이블', '마일스톤', '작성자'] as const).map((label) => (
-                  <button key={label} type="button" className="issue-table__filter-btn">
-                    {label}
+              <div className="issue-table__filters" ref={filtersRef}>
+                <div className="filter-menu">
+                  <button
+                    type="button"
+                    className={`issue-table__filter-btn ${assigneeIds.length > 0 ? 'is-active' : ''}`}
+                    aria-expanded={openFilterMenu === 'assignees'}
+                    onClick={() => setOpenFilterMenu((open) => (open === 'assignees' ? null : 'assignees'))}
+                  >
+                    담당자{assigneeIds.length > 0 ? `(${assigneeIds.length})` : ''}
                     <img src={icon('chevronDown')} alt="" width={16} height={16} />
                   </button>
-                ))}
+                  {openFilterMenu === 'assignees' && (
+                    <div className="filter-menu__panel" role="menu" aria-label="담당자 목록">
+                      <div className="filter-menu__head">담당자</div>
+                      {assigneeIds.length > 0 && (
+                        <button
+                          type="button"
+                          className="filter-menu__item filter-menu__item--muted"
+                          onClick={() => clearFilterParam('assigneeIds')}
+                        >
+                          담당자 필터 해제
+                        </button>
+                      )}
+                      {isUsersLoading && <p className="filter-menu__status">불러오는 중...</p>}
+                      {isUsersError && <p className="filter-menu__status filter-menu__status--error">사용자 목록을 불러오지 못했습니다.</p>}
+                      {!isUsersLoading && !isUsersError && sortedUsers.length === 0 && (
+                        <p className="filter-menu__status">등록된 사용자가 없습니다.</p>
+                      )}
+                      {sortedUsers.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          className={`filter-menu__item ${selectedAssigneeIds.has(user.id) ? 'is-active' : ''}`}
+                          aria-pressed={selectedAssigneeIds.has(user.id)}
+                          onClick={() => toggleListFilter('assigneeIds', user.id)}
+                        >
+                          <img
+                            src={user.profileImageUrl || icon('userImageSmall')}
+                            alt=""
+                            className="filter-menu__avatar"
+                            width={20}
+                            height={20}
+                          />
+                          <span>{user.username}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="filter-menu">
+                  <button
+                    type="button"
+                    className={`issue-table__filter-btn ${labelIds.length > 0 ? 'is-active' : ''}`}
+                    aria-expanded={openFilterMenu === 'labels'}
+                    onClick={() => setOpenFilterMenu((open) => (open === 'labels' ? null : 'labels'))}
+                  >
+                    레이블{labelIds.length > 0 ? `(${labelIds.length})` : ''}
+                    <img src={icon('chevronDown')} alt="" width={16} height={16} />
+                  </button>
+                  {openFilterMenu === 'labels' && (
+                    <div className="filter-menu__panel" role="menu" aria-label="레이블 목록">
+                      <div className="filter-menu__head">레이블</div>
+                      {labelIds.length > 0 && (
+                        <button
+                          type="button"
+                          className="filter-menu__item filter-menu__item--muted"
+                          onClick={() => clearFilterParam('labelIds')}
+                        >
+                          레이블 필터 해제
+                        </button>
+                      )}
+                      {sortedLabels.length === 0 && <p className="filter-menu__status">등록된 레이블이 없습니다.</p>}
+                      {sortedLabels.map((label) => (
+                        <button
+                          key={label.labelId}
+                          type="button"
+                          className={`filter-menu__item ${selectedLabelIds.has(label.labelId) ? 'is-active' : ''}`}
+                          aria-pressed={selectedLabelIds.has(label.labelId)}
+                          onClick={() => toggleListFilter('labelIds', label.labelId)}
+                        >
+                          <LabelBadge label={label} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="filter-menu">
+                  <button
+                    type="button"
+                    className={`issue-table__filter-btn ${milestoneId ? 'is-active' : ''}`}
+                    aria-expanded={openFilterMenu === 'milestones'}
+                    onClick={() => setOpenFilterMenu((open) => (open === 'milestones' ? null : 'milestones'))}
+                  >
+                    마일스톤{milestoneId ? '(1)' : ''}
+                    <img src={icon('chevronDown')} alt="" width={16} height={16} />
+                  </button>
+                  {openFilterMenu === 'milestones' && (
+                    <div className="filter-menu__panel filter-menu__panel--wide" role="menu" aria-label="마일스톤 목록">
+                      <div className="filter-menu__head">마일스톤</div>
+                      {milestoneId && (
+                        <button
+                          type="button"
+                          className="filter-menu__item filter-menu__item--muted"
+                          onClick={() => {
+                            clearFilterParam('milestoneId');
+                            setOpenFilterMenu(null);
+                          }}
+                        >
+                          마일스톤 필터 해제
+                        </button>
+                      )}
+                      {isMilestonesLoading && <p className="filter-menu__status">불러오는 중...</p>}
+                      {isMilestonesError && <p className="filter-menu__status filter-menu__status--error">마일스톤 목록을 불러오지 못했습니다.</p>}
+                      {!isMilestonesLoading && !isMilestonesError && sortedMilestones.length === 0 && (
+                        <p className="filter-menu__status">등록된 마일스톤이 없습니다.</p>
+                      )}
+                      {sortedMilestones.map((milestone) => (
+                        <button
+                          key={milestone.id}
+                          type="button"
+                          className={`filter-menu__item filter-menu__item--stacked ${milestoneId === milestone.id ? 'is-active' : ''}`}
+                          aria-pressed={milestoneId === milestone.id}
+                          onClick={() => toggleSingleFilter('milestoneId', milestone.id)}
+                        >
+                          <span className="filter-menu__title">
+                            <img src={icon('milestone')} alt="" width={14} height={14} />
+                            <strong>{milestone.name}</strong>
+                          </span>
+                          <span className="filter-menu__meta">
+                            {milestone.status === 'OPEN' ? '열림' : '닫힘'} · 열린 이슈 {milestone.openIssueCount ?? 0}개 · 닫힌 이슈 {milestone.closedIssueCount ?? 0}개
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="filter-menu">
+                  <button
+                    type="button"
+                    className={`issue-table__filter-btn ${authorId ? 'is-active' : ''}`}
+                    aria-expanded={openFilterMenu === 'authors'}
+                    onClick={() => setOpenFilterMenu((open) => (open === 'authors' ? null : 'authors'))}
+                  >
+                    작성자{authorId ? '(1)' : ''}
+                    <img src={icon('chevronDown')} alt="" width={16} height={16} />
+                  </button>
+                  {openFilterMenu === 'authors' && (
+                    <div className="filter-menu__panel" role="menu" aria-label="작성자 목록">
+                      <div className="filter-menu__head">작성자</div>
+                      {authorId && (
+                        <button
+                          type="button"
+                          className="filter-menu__item filter-menu__item--muted"
+                          onClick={() => {
+                            clearFilterParam('authorId');
+                            setOpenFilterMenu(null);
+                          }}
+                        >
+                          작성자 필터 해제
+                        </button>
+                      )}
+                      {isUsersLoading && <p className="filter-menu__status">불러오는 중...</p>}
+                      {isUsersError && <p className="filter-menu__status filter-menu__status--error">사용자 목록을 불러오지 못했습니다.</p>}
+                      {!isUsersLoading && !isUsersError && sortedUsers.length === 0 && (
+                        <p className="filter-menu__status">등록된 사용자가 없습니다.</p>
+                      )}
+                      {sortedUsers.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          className={`filter-menu__item ${authorId === user.id ? 'is-active' : ''}`}
+                          aria-pressed={authorId === user.id}
+                          onClick={() => toggleSingleFilter('authorId', user.id)}
+                        >
+                          <img
+                            src={user.profileImageUrl || icon('userImageSmall')}
+                            alt=""
+                            className="filter-menu__avatar"
+                            width={20}
+                            height={20}
+                          />
+                          <span>{user.username}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -256,7 +557,7 @@ export function IssueListPage() {
           )}
           {!isLoading && !isError && rows.length === 0 && (
             <li className="issue-table__empty">
-              {keyword.trim()
+              {hasKeywordSearch || hasActiveIssueFilters
                 ? '검색과 일치하는 결과가 없습니다.'
                 : '등록된 이슈가 없습니다.'}
             </li>

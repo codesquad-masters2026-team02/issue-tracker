@@ -212,10 +212,10 @@ paths:
         required: false
         schema:
           type: string
-          default: OPEN
           enum:
           - OPEN
           - CLOSED
+          default: OPEN
       responses:
         "200":
           description: OK
@@ -1136,6 +1136,22 @@ components:
           enum:
           - OPEN
           - CLOSED
+        assigneeIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        labelIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        milestoneId:
+          type: integer
+          format: int64
+        authorId:
+          type: integer
+          format: int64
     ApiResponseIssueSearchResponse:
       type: object
       properties:
