@@ -5,6 +5,7 @@ import com.codesquad.issueTracker.attachment.dto.PresignRequest;
 import com.codesquad.issueTracker.attachment.dto.PresignResponse;
 import com.codesquad.issueTracker.common.exception.BusinessException;
 import com.codesquad.issueTracker.common.exception.ErrorCode;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -17,7 +18,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -29,9 +33,10 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 public class AttachmentService {
 
     private static final long MAX_SIZE = 5L * 1024 * 1024;
-    private static final Set<String> ALLOWED_TYPES = Set.of(
+    private static final Set<String> ATTACHMENT_ALLOWED_TYPES = Set.of(
             "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf"
     );
+    private static final Set<String> PROFILE_ALLOWED_TYPES = Set.of("image/png", "image/jpeg");
 
     @Value("${aws.s3.bucket}")
     private String bucket;
@@ -41,30 +46,15 @@ public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
 
 
-    public PresignResponse createPresignedUpload(PresignRequest request, Long userId) {
-        if (request.size() > MAX_SIZE) {
-            throw new BusinessException(ErrorCode.FILE_TOO_LARGE);
-        }
-        if (!ALLOWED_TYPES.contains(request.contentType())) {
+    public PresignResponse createAttachmentPresignedURL(PresignRequest request, Long userId) {
+        if (!ATTACHMENT_ALLOWED_TYPES.contains(request.contentType())) {
             throw new BusinessException(ErrorCode.UNSUPPORTED_FILE_TYPE);
         }
-
         UUID attachmentId = UUID.randomUUID();
         String extension = extractExtension(request.filename());
         String s3Key = String.format("attachments/%d%s%s", userId, attachmentId, extension);
 
-        PutObjectRequest pubRequest = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(s3Key)
-                .contentType(request.contentType())
-                .build();
-
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
-                .putObjectRequest(pubRequest)
-                .build();
-
-        String uploadUrl = presigner.presignPutObject(presignRequest).url().toString();
+        String uploadUrl = getPresignedUrl(request, s3Key);
 
         Attachment attachment = Attachment.createPending(
                 attachmentId, s3Key, request.filename(), request.contentType(), request.size(), userId
@@ -119,6 +109,57 @@ public class AttachmentService {
                         a -> a.getCommentId().getId(),
                         Collectors.mapping(AttachmentSummaryResponse::from, Collectors.toList())
                 ));
+    }
+
+    private String getPresignedUrl(PresignRequest request, String s3Key) {
+        if (request.size() > MAX_SIZE) {
+            throw new BusinessException(ErrorCode.FILE_TOO_LARGE);
+        }
+        PutObjectRequest pubRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(s3Key)
+                .contentType(request.contentType())
+                .build();
+
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(5))
+                .putObjectRequest(pubRequest)
+                .build();
+
+        return presigner.presignPutObject(presignRequest).url().toString();
+    }
+
+    public String uploadProfile(MultipartFile file, Long userId) {
+        if (!PROFILE_ALLOWED_TYPES.contains(file.getContentType())) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_FILE_TYPE);
+        }
+        UUID attachmentId = UUID.randomUUID();
+        String s3Key = String.format("profiles/%d%s", userId, attachmentId);
+
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Key)
+                            .contentType(file.getContentType())
+                            .build(),
+                    RequestBody.fromBytes(file.getBytes())
+            );
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        return "/" + s3Key;
+    }
+    public void removeOld(String profileImageUrl) {
+        if (profileImageUrl.startsWith("/")) {
+            return;
+        }
+
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(profileImageUrl.substring(1))
+                .build());
     }
 
     private String extractExtension(String filename) {

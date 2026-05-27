@@ -330,6 +330,17 @@ export async function signInWithGithub(code: string): Promise<AccessTokenRespons
   return data.data;
 }
 
+export async function editProfileImage(file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post<ApiResponse<void>>('/api/users/edit', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  if (!data.success) {
+    throw new Error(data.error?.message ?? '프로필 이미지를 변경하지 못했습니다.');
+  }
+}
+
 export async function signOut(): Promise<void> {
   const { data } = await api.post<ApiResponse<void>>('/api/users/logout');
   if (!data.success) {

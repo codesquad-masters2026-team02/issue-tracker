@@ -29,6 +29,7 @@ interface AuthContextValue {
   loginWithGithub: (code: string) => Promise<void>;
   signup: (body: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   clearSession: () => void;
 }
 
@@ -104,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         queryClient.clear();
       }
+    },
+    refreshUser: async () => {
+      setUser(await fetchMyInfo());
     },
     clearSession: () => {
       setAccessToken(null);
