@@ -63,3 +63,41 @@ jobs:
               -e GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
               -e GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
               ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
+
+            # --- Monitoring stack (Prometheus + Grafana) ---
+            # Only start if not already running.
+
+            if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^prometheus$'; then
+              docker stop prometheus || true
+              docker rm prometheus || true
+              mkdir -p /opt/monitoring
+              cat > /opt/monitoring/prometheus.yml << 'PROMEOF'
+            global:
+              scrape_interval: 15s
+            scrape_configs:
+              - job_name: 'spring-app'
+                static_configs:
+                  - targets: ['host.docker.internal:8080']
+                metrics_path: '/actuator/prometheus'
+                relabel_configs:
+                  - target_label: application
+                    replacement: spring-app
+            PROMEOF
+              docker run -d --name prometheus \
+                --add-host=host.docker.internal:host-gateway \
+                -p 127.0.0.1:9090:9090 \
+                -v /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
+                --restart unless-stopped \
+                prom/prometheus
+            fi
+
+            if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^grafana$'; then
+              docker stop grafana || true
+              docker rm grafana || true
+              docker run -d --name grafana \
+                -p 127.0.0.1:3000:3000 \
+                -e GF_SERVER_ROOT_URL=http://%(domain)s/grafana/ \
+                -e GF_SERVER_SERVE_FROM_SUB_PATH=true \
+                --restart unless-stopped \
+                grafana/grafana
+            fi
