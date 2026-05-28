@@ -82,12 +82,13 @@ public class IssueService {
         Map<Long, Label> labelMap = findLabelMapByIssues(issues);
         Map<Long, Milestone> milestoneMap = findMilestoneMapByIssues(issues);
         Map<Long, Issue> issueMap = issues.stream().collect(Collectors.toMap(Issue::getId, Function.identity()));
-
+        Map<Long, User> assigneeMap = findAssigneeMapByIssues(issues);
+        Map<Long, User> authorMap = findAuthorMapByIssues(issues);
 
         List<IssueSummaryResponse> issueSummaryResponses = filteredIssueIds.stream()
                 .map(issueMap::get)
                 .filter(Objects::nonNull)
-                .map(issue -> issueResponseMapper.toResponse(issue, labelMap, milestoneMap))
+                .map(issue -> issueResponseMapper.toResponse(issue, authorMap, labelMap, milestoneMap, assigneeMap))
                 .toList();
 
 
@@ -175,6 +176,21 @@ public class IssueService {
                 .collect(Collectors.toMap(Label::getId, Function.identity()));
     }
 
+
+    private Map<Long, User> findAuthorMapByIssues(List<Issue> issues) {
+        Set<Long> authorIds = issues.stream()
+                .map(Issue::getAuthorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (authorIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return userRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
     private Map<Long, Milestone> findMilestoneMapByIssues(List<Issue> issues) {
         Set<Long> milestoneIds = issues.stream()
                 .map(Issue::getMilestoneId)
@@ -187,6 +203,20 @@ public class IssueService {
 
         return milestoneRepository.findActiveAllByIds(milestoneIds).stream()
                 .collect(Collectors.toMap(Milestone::getId, Function.identity()));
+    }
+
+    private Map<Long, User> findAssigneeMapByIssues(List<Issue> issues) {
+        Set<Long> assigneeIds = issues.stream()
+                .flatMap(issue -> issue.getUsers().stream())
+                .map(IssueUser::userId)
+                .collect(Collectors.toSet());
+
+        if (assigneeIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return userRepository.findAllById(assigneeIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 
     private List<AssigneeSummaryResponse> findAssigneeByIssueUser(Issue issue){

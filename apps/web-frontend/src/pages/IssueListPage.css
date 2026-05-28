@@ -315,7 +315,26 @@
   flex: 0 0 auto;
   opacity: 0.7;
 }
-.issue-row__assignee { border-radius: var(--radius-full); }
+.issue-row__assignees {
+  display: flex;
+  flex-direction: row-reverse;
+}
+.issue-row__assignees .issue-row__assignee {
+  margin-right: -8px;
+  transition: margin 0.2s ease;
+  box-shadow: 0 0 0 2px var(--color-bg-surface, #fff);
+}
+.issue-row__assignees .issue-row__assignee:first-child {
+  margin-right: 0;
+}
+.issue-row__assignees:hover .issue-row__assignee {
+  margin-right: 2px;
+}
+.issue-row__assignees:hover .issue-row__assignee:first-child {
+  margin-right: 0;
+}
+.issue-row__assignee { border-radius: var(--radius-full); object-fit: cover; }
+.issue-row__assignees .issue-row__assignee { cursor: pointer; }
 
 .issue-pagination {
   display: flex;

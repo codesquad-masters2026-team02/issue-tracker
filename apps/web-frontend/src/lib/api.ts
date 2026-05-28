@@ -89,9 +89,11 @@ export interface IssueSummaryResponse {
   issueNumber: number;
   title: string;
   status: IssueStatus;
+  author: string;
   createdAt: string; // ISO date-time
   labels: LabelSummaryResponse[];
   milestone?: MilestoneReferenceResponse | null;
+  assignees: UserInfoResponse[];
 }
 
 export interface IssueDetailResponse {

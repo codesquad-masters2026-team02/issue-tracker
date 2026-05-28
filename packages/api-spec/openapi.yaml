@@ -206,12 +206,12 @@ paths:
       tags:
       - user-controller
       operationId: editProfile
-      parameters:
-      - name: request
-        in: query
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileEditRequest"
         required: true
-        schema:
-          $ref: "#/components/schemas/ProfileEditRequest"
       responses:
         "200":
           description: OK
@@ -866,9 +866,11 @@ components:
         error:
           $ref: "#/components/schemas/ErrorDto"
     ProfileEditRequest:
+      required:
+      - imageUrl
       type: object
       properties:
-        publicUrl:
+        imageUrl:
           type: string
     IssueRequest:
       type: object
@@ -1257,7 +1259,7 @@ components:
           format: int64
         totalPages:
           type: integer
-          format: int64
+          format: int32
         first:
           type: boolean
         last:
@@ -1279,6 +1281,8 @@ components:
           enum:
           - OPEN
           - CLOSED
+        author:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -1288,6 +1292,10 @@ components:
             $ref: "#/components/schemas/LabelSummaryResponse"
         milestone:
           $ref: "#/components/schemas/MilestoneReferenceResponse"
+        assignees:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserInfoResponse"
     MilestoneReferenceResponse:
       type: object
       properties:

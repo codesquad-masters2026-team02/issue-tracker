@@ -830,7 +830,7 @@ export function IssueListPage() {
                 </div>
                 <div className="issue-row__meta">
                   <span>#{issue.issueNumber}</span>
-                  <span>이 이슈가 {formatRelative(issue.createdAt)}에 작성되었습니다</span>
+                  <span>이 이슈가 {formatRelative(issue.createdAt)}, {issue.author}님에 의해 작성되었습니다</span>
                   {issue.milestone && (
                     <span className="issue-row__milestone">
                       <img src={icon('milestone')} alt="" width={14} height={14} />
@@ -839,13 +839,28 @@ export function IssueListPage() {
                   )}
                 </div>
               </div>
-              <img
-                src={icon('userImageSmall')}
-                alt=""
-                className="issue-row__assignee"
-                width={24}
-                height={24}
-              />
+              {(issue.assignees ?? []).length > 0 ? (
+                <div className="issue-row__assignees">
+                  {issue.assignees.map((assignee) => (
+                    <img
+                      key={assignee.id}
+                      src={assignee.profileImageUrl || icon('userImageSmall')}
+                      alt={assignee.username}
+                      title={assignee.username}
+                      className="issue-row__assignee"
+                      width={24}
+                      height={24}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateFilters((next) => {
+                          next.delete('assigneeIds');
+                          next.append('assigneeIds', String(assignee.id));
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
