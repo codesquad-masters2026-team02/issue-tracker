@@ -47,6 +47,7 @@ jobs:
           source: apps/spring-api/prometheus.yml
           target: /opt/monitoring
           strip_components: 2
+          overwrite: true
 
       # 6. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
