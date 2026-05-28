@@ -48,6 +48,16 @@ spring:
       mode: never
   flyway:
     enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 ---
 
 spring:
@@ -63,3 +73,13 @@ spring:
       mode: never
   flyway:
     enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
