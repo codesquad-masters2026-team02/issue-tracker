@@ -90,7 +90,7 @@ jobs:
               docker rm grafana || true
               docker run -d --name grafana \
                 -p 127.0.0.1:3000:3000 \
-                -e GF_SERVER_ROOT_URL=http://%(domain)s/grafana/ \
+                -e 'GF_SERVER_ROOT_URL=http://%(domain)s/grafana/' \
                 -e GF_SERVER_SERVE_FROM_SUB_PATH=true \
                 --restart unless-stopped \
                 grafana/grafana
