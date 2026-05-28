@@ -37,7 +37,18 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
-      # 5. DEPLOY TO REMOTE SERVER
+      # 5. COPY PROMETHEUS CONFIG TO REMOTE SERVER
+      - name: Copy prometheus.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: apps/spring-api/prometheus.yml
+          target: /opt/monitoring
+          strip_components: 2
+
+      # 6. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -47,10 +58,12 @@ jobs:
           script: |
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
+            docker pull prom/prometheus
+            docker pull grafana/grafana
+
+            # --- Spring API ---
             docker stop api || true
             docker rm api || true
-            # Run the API behind nginx. nginx owns public port 80, so expose
-            # Spring only on localhost for reverse proxying.
             docker run -d --name api -p 127.0.0.1:8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_HOST=${{ secrets.DB_HOST }} \
@@ -64,33 +77,17 @@ jobs:
               -e GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
               ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
-            # --- Monitoring stack (Prometheus + Grafana) ---
-            # Only start if not already running.
+            # --- Prometheus ---
+            docker stop prometheus || true
+            docker rm prometheus || true
+            docker run -d --name prometheus \
+              --add-host=host.docker.internal:host-gateway \
+              -p 127.0.0.1:9090:9090 \
+              -v /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
+              --restart unless-stopped \
+              prom/prometheus
 
-            if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^prometheus$'; then
-              docker stop prometheus || true
-              docker rm prometheus || true
-              mkdir -p /opt/monitoring
-              cat > /opt/monitoring/prometheus.yml << 'PROMEOF'
-            global:
-              scrape_interval: 15s
-            scrape_configs:
-              - job_name: 'spring-app'
-                static_configs:
-                  - targets: ['host.docker.internal:8080']
-                metrics_path: '/actuator/prometheus'
-                relabel_configs:
-                  - target_label: application
-                    replacement: spring-app
-            PROMEOF
-              docker run -d --name prometheus \
-                --add-host=host.docker.internal:host-gateway \
-                -p 127.0.0.1:9090:9090 \
-                -v /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
-                --restart unless-stopped \
-                prom/prometheus
-            fi
-
+            # --- Grafana ---
             if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^grafana$'; then
               docker stop grafana || true
               docker rm grafana || true
