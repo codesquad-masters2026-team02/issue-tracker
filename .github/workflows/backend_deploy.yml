@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Spring API Image
         uses: docker/build-push-action@v6
         with:
           context: apps/spring-api
@@ -37,19 +37,16 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
-      # 5. COPY PROMETHEUS CONFIG TO REMOTE SERVER
-      - name: Copy prometheus.yml
-        uses: appleboy/scp-action@v0.1.7
+      - name: Build and Push Prometheus Image
+        uses: docker/build-push-action@v6
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: apps/spring-api/prometheus.yml
-          target: /opt/monitoring
-          strip_components: 2
-          overwrite: true
+          context: apps/spring-api
+          file: apps/spring-api/Dockerfile.prometheus
+          platforms: linux/arm64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
 
-      # 6. DEPLOY TO REMOTE SERVER
+      # 5. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -59,7 +56,7 @@ jobs:
           script: |
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
-            docker pull prom/prometheus
+            docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
             docker pull grafana/grafana
 
             # --- Spring API ---
@@ -84,9 +81,8 @@ jobs:
             docker run -d --name prometheus \
               --add-host=host.docker.internal:host-gateway \
               -p 127.0.0.1:9090:9090 \
-              -v /opt/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
               --restart unless-stopped \
-              prom/prometheus
+              ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
 
             # --- Grafana ---
             if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^grafana$'; then
