@@ -24,6 +24,7 @@ public enum ErrorCode {
     UNAUTHORIZED_MODIFICATION(HttpStatus.FORBIDDEN, "작성자만 삭제할 수 있습니다"),
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE,"최대 파일 크기는 5MB입니다."),
     UNSUPPORTED_FILE_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 파일 타입"),
+    PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 페이지는 존재하지 않습니다"),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드 실패");
     private final HttpStatus status;
     private final String message;

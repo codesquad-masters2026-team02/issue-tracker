@@ -40,23 +40,15 @@ function toFilterToken(key: 'assignee' | 'label' | 'milestone' | 'author', value
   return `${key}:${quoteQueryValue(String(value))}`;
 }
 
-function stripConditionTokens(value: string, conditionTokens: string[]) {
-  let next = value;
-  conditionTokens.forEach((token) => {
-    next = next.split(token).join(' ');
-  });
-
-  return next
-    .replace(/\bis:issue\b|\bis:open\b|\bis:closed\b/gi, ' ')
-    .replace(/\b(?:assignee|label|milestone|author):(?:"(?:\\"|[^"])*"|\S+)/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 function parsePositiveId(value: string | null) {
   if (!value) return undefined;
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : undefined;
+}
+
+function parsePageNumber(value: string | null) {
+  const pageNumber = Number(value);
+  return Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 0;
 }
 
 function parsePositiveIds(searchParams: URLSearchParams, key: string) {
@@ -68,6 +60,64 @@ function parsePositiveIds(searchParams: URLSearchParams, key: string) {
   )];
 }
 
+function createPageNumbers(currentPage: number, totalPages: number) {
+  if (totalPages <= 0) return [];
+
+  const visibleCount = Math.min(totalPages, 5);
+  const half = Math.floor(visibleCount / 2);
+  const maxStart = Math.max(0, totalPages - visibleCount);
+  const start = Math.min(Math.max(0, currentPage - half), maxStart);
+
+  return Array.from({ length: visibleCount }, (_, index) => start + index);
+}
+
+function tokenizeSearchQuery(value: string) {
+  const tokens: string[] = [];
+  let current = '';
+  let quoted = false;
+  let escaped = false;
+
+  for (const char of value) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\' && quoted) {
+      escaped = true;
+      current += char;
+      continue;
+    }
+
+    if (char === '"') {
+      quoted = !quoted;
+      current += char;
+      continue;
+    }
+
+    if (/\s/.test(char) && !quoted) {
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+function unquoteQueryValue(value: string) {
+  if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+    return value.slice(1, -1).replace(/\\"/g, '"');
+  }
+  return value;
+}
+
 export function IssueListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = toTab(searchParams.get('status'));
@@ -75,13 +125,15 @@ export function IssueListPage() {
   const labelIds = useMemo(() => parsePositiveIds(searchParams, 'labelIds'), [searchParams]);
   const milestoneId = parsePositiveId(searchParams.get('milestoneId'));
   const authorId = parsePositiveId(searchParams.get('authorId'));
+  const pageNumber = parsePageNumber(searchParams.get('pageNumber'));
   const issueFilters = useMemo<IssueListFilters>(() => ({
     status: tab,
     assigneeIds,
     labelIds,
     milestoneId,
     authorId,
-  }), [assigneeIds, authorId, labelIds, milestoneId, tab]);
+    pageNumber,
+  }), [assigneeIds, authorId, labelIds, milestoneId, pageNumber, tab]);
   const { data, isLoading, isError, error } = useIssueListQuery(issueFilters);
   const { data: labels = [] } = useLabelListQuery();
   const { data: users = [], isLoading: isUsersLoading, isError: isUsersError } = useUserListQuery();
@@ -93,6 +145,7 @@ export function IssueListPage() {
     error: bulkStatusError,
   } = useBulkUpdateIssueStatusMutation();
   const [titleSearch, setTitleSearch] = useState('');
+  const [searchInputText, setSearchInputText] = useState('');
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [openFilterMenu, setOpenFilterMenu] = useState<FilterMenu>(null);
@@ -125,14 +178,35 @@ export function IssueListPage() {
     () => new Map(users.map((user) => [user.id, user])),
     [users],
   );
+  const userIdByQueryValue = useMemo(() => {
+    const entries = users.flatMap((user) => [
+      [user.username.toLowerCase(), user.id] as const,
+      [String(user.id), user.id] as const,
+    ]);
+    return new Map(entries);
+  }, [users]);
   const labelById = useMemo(
     () => new Map(labels.map((label) => [label.labelId, label])),
     [labels],
   );
+  const labelIdByQueryValue = useMemo(() => {
+    const entries = labels.flatMap((label) => [
+      [label.name.toLowerCase(), label.labelId] as const,
+      [String(label.labelId), label.labelId] as const,
+    ]);
+    return new Map(entries);
+  }, [labels]);
   const milestoneById = useMemo(
     () => new Map(sortedMilestones.map((milestone) => [milestone.id, milestone])),
     [sortedMilestones],
   );
+  const milestoneIdByQueryValue = useMemo(() => {
+    const entries = sortedMilestones.flatMap((milestone) => [
+      [milestone.name.toLowerCase(), milestone.id] as const,
+      [String(milestone.id), milestone.id] as const,
+    ]);
+    return new Map(entries);
+  }, [sortedMilestones]);
   const conditionTokens = useMemo(() => {
     const tokens = ['is:issue', tab === 'OPEN' ? 'is:open' : 'is:closed'];
 
@@ -151,12 +225,18 @@ export function IssueListPage() {
 
     return tokens;
   }, [assigneeIds, authorId, labelById, labelIds, milestoneById, milestoneId, tab, userById]);
-  const searchQueryText = useMemo(
-    () => [...conditionTokens, titleSearch].filter(Boolean).join(' '),
-    [conditionTokens, titleSearch],
+  const conditionQueryText = useMemo(
+    () => conditionTokens.join(' '),
+    [conditionTokens],
   );
   const isMilestonesLoading = isOpenMilestonesLoading || isClosedMilestonesLoading;
   const isMilestonesError = isOpenMilestonesError || isClosedMilestonesError;
+  const currentPage = data?.pageNumber ?? pageNumber;
+  const totalPages = data?.totalPages ?? 0;
+  const pageNumbers = useMemo(
+    () => createPageNumbers(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
 
   const { openCount, closedCount, rows, hasKeywordSearch } = useMemo(() => {
     const base = data?.issues ?? [];
@@ -212,6 +292,10 @@ export function IssueListPage() {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [openFilterMenu]);
 
+  useEffect(() => {
+    setSearchInputText([conditionQueryText, titleSearch].filter(Boolean).join(' '));
+  }, [conditionQueryText]);
+
   const handleTabClick = (nextTab: Tab) => {
     const next = new URLSearchParams(searchParams);
     if (nextTab === 'OPEN') {
@@ -219,6 +303,7 @@ export function IssueListPage() {
     } else {
       next.set('status', 'CLOSED');
     }
+    next.delete('pageNumber');
     setSearchParams(next);
     setSelectedIssueIds(new Set());
     setIsStatusMenuOpen(false);
@@ -228,8 +313,110 @@ export function IssueListPage() {
   const updateFilters = (updater: (next: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
     updater(next);
+    next.delete('pageNumber');
     setSearchParams(next);
     setSelectedIssueIds(new Set());
+  };
+
+  const handleSearchInputChange = (value: string) => {
+    setSearchInputText(value);
+
+    const nextAssigneeIds = new Set<number>();
+    const nextLabelIds = new Set<number>();
+    let nextMilestoneId: number | undefined;
+    let nextAuthorId: number | undefined;
+    let nextStatus: IssueStatus = 'OPEN';
+    const titleParts: string[] = [];
+
+    tokenizeSearchQuery(value).forEach((token) => {
+      const separatorIndex = token.indexOf(':');
+      if (separatorIndex < 0) {
+        titleParts.push(token);
+        return;
+      }
+
+      const key = token.slice(0, separatorIndex).toLowerCase();
+      const rawValue = unquoteQueryValue(token.slice(separatorIndex + 1));
+      const lookupValue = rawValue.toLowerCase();
+
+      if (key === 'is') {
+        if (lookupValue === 'closed') nextStatus = 'CLOSED';
+        if (lookupValue === 'open') nextStatus = 'OPEN';
+        return;
+      }
+
+      if (key === 'assignee') {
+        const id = userIdByQueryValue.get(lookupValue);
+        if (id) {
+          nextAssigneeIds.add(id);
+          return;
+        }
+      }
+
+      if (key === 'label') {
+        const id = labelIdByQueryValue.get(lookupValue);
+        if (id) {
+          nextLabelIds.add(id);
+          return;
+        }
+      }
+
+      if (key === 'milestone') {
+        const id = milestoneIdByQueryValue.get(lookupValue);
+        if (id) {
+          nextMilestoneId = id;
+          return;
+        }
+      }
+
+      if (key === 'author') {
+        const id = userIdByQueryValue.get(lookupValue);
+        if (id) {
+          nextAuthorId = id;
+          return;
+        }
+      }
+
+      titleParts.push(token);
+    });
+
+    const next = new URLSearchParams(searchParams);
+    if (nextStatus === 'OPEN') {
+      next.delete('status');
+    } else {
+      next.set('status', 'CLOSED');
+    }
+    next.delete('assigneeIds');
+    next.delete('labelIds');
+    next.delete('milestoneId');
+    next.delete('authorId');
+    next.delete('pageNumber');
+    nextAssigneeIds.forEach((id) => next.append('assigneeIds', String(id)));
+    nextLabelIds.forEach((id) => next.append('labelIds', String(id)));
+    if (nextMilestoneId) next.set('milestoneId', String(nextMilestoneId));
+    if (nextAuthorId) next.set('authorId', String(nextAuthorId));
+
+    setTitleSearch(titleParts.join(' '));
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next);
+    }
+    setSelectedIssueIds(new Set());
+    setIsStatusMenuOpen(false);
+    setOpenFilterMenu(null);
+  };
+
+  const handlePageChange = (nextPageNumber: number) => {
+    if (nextPageNumber < 0 || nextPageNumber === currentPage) return;
+    const next = new URLSearchParams(searchParams);
+    if (nextPageNumber === 0) {
+      next.delete('pageNumber');
+    } else {
+      next.set('pageNumber', String(nextPageNumber));
+    }
+    setSearchParams(next);
+    setSelectedIssueIds(new Set());
+    setIsStatusMenuOpen(false);
+    setOpenFilterMenu(null);
   };
 
   const clearFilterParam = (key: 'assigneeIds' | 'labelIds' | 'milestoneId' | 'authorId') => {
@@ -304,8 +491,8 @@ export function IssueListPage() {
           <div className="search-pill__input">
             <img src={icon('search')} alt="" width={16} height={16} />
             <input
-              value={searchQueryText}
-              onChange={(e) => setTitleSearch(stripConditionTokens(e.target.value, conditionTokens))}
+              value={searchInputText}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
               placeholder="is:issue is:open"
             />
           </div>
@@ -662,6 +849,39 @@ export function IssueListPage() {
             </li>
           ))}
         </ul>
+        {totalPages > 1 && (
+          <nav className="issue-pagination" aria-label="이슈 페이지">
+            <button
+              type="button"
+              className="issue-pagination__button"
+              disabled={data?.first ?? currentPage === 0}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              이전
+            </button>
+            <div className="issue-pagination__pages">
+              {pageNumbers.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  className={`issue-pagination__page ${page === currentPage ? 'is-active' : ''}`}
+                  aria-current={page === currentPage ? 'page' : undefined}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="issue-pagination__button"
+              disabled={data?.last ?? currentPage >= totalPages - 1}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              다음
+            </button>
+          </nav>
+        )}
       </section>
     </div>
   );

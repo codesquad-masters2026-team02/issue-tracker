@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,9 @@ public class IssueService {
     private final IssueResponseMapper issueResponseMapper;
     private final UserRepository userRepository;
     private final IssueFilterRepository filterRepository;
+
+    @Value("${app.issue-filter.paging-size}")
+    private int pageSize;
 
     @Transactional
     public IssueDetailResponse create(IssueRequest request, Long authorId) {
@@ -65,19 +69,32 @@ public class IssueService {
         long openIssueCount = filterRepository.countIssuesUnderConditionAndStatus(IssueStatus.OPEN,condition);
         long closedIssueCount = filterRepository.countIssuesUnderConditionAndStatus(IssueStatus.CLOSED, condition);
 
+        long issueCount = condition.status() == IssueStatus.OPEN ? openIssueCount : closedIssueCount;
+        int totalPages = (int) Math.ceil((double) issueCount / pageSize );
+
+        if(totalPages > 0 && condition.pageNumber() >= totalPages){
+            throw new BusinessException(ErrorCode.PAGE_NOT_FOUND);
+        }
+
         List<Long> filteredIssueIds = filterRepository.filterIssueWithSearchCondition(condition);
+
         List<Issue> issues = issueRepository.findAllById(filteredIssueIds);
-
-
-
         Map<Long, Label> labelMap = findLabelMapByIssues(issues);
         Map<Long, Milestone> milestoneMap = findMilestoneMapByIssues(issues);
+        Map<Long, Issue> issueMap = issues.stream().collect(Collectors.toMap(Issue::getId, Function.identity()));
 
-        List<IssueSummaryResponse> issueSummaryResponses = issues.stream()
+
+        List<IssueSummaryResponse> issueSummaryResponses = filteredIssueIds.stream()
+                .map(issueMap::get)
+                .filter(Objects::nonNull)
                 .map(issue -> issueResponseMapper.toResponse(issue, labelMap, milestoneMap))
                 .toList();
 
-        return IssueSearchResponse.from(openIssueCount, closedIssueCount, issueSummaryResponses);
+
+        boolean first = condition.pageNumber() == 0;
+        boolean last = condition.pageNumber() >= totalPages - 1;
+
+        return IssueSearchResponse.from(openIssueCount, closedIssueCount, condition.pageNumber(),pageSize,issueCount,totalPages,first,last, issueSummaryResponses);
     }
 
     public IssueDetailResponse findIssueById(Long id) {

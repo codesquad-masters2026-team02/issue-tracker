@@ -28,7 +28,6 @@ public class JwtHelper {
 
         this.accessTokenExpInMs = accessTokenExpInMs;
         this.refreshTokenExpInMs = refreshTokenExpInMs;
-        // Now it's perfectly safe to generate the key!
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
     }
 

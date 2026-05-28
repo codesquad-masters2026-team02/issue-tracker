@@ -2,6 +2,7 @@ package com.codesquad.issueTracker.issue;
 
 import com.codesquad.issueTracker.issue.dto.request.IssueSearchCondition;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -12,6 +13,9 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class IssueFilterRepository {
+
+    @Value("${app.issue-filter.paging-size}")
+    private int pageSize;
 
     private final NamedParameterJdbcTemplate template;
 
@@ -27,6 +31,10 @@ public class IssueFilterRepository {
         source.addValue("status", conditions.status().name());
         addConditionsValues(conditions, builder, source);
         builder.append(" ORDER BY iss.id DESC");
+        builder.append(" LIMIT :pageSize");
+        builder.append(" OFFSET :offset");
+        source.addValue("pageSize", pageSize);
+        source.addValue("offset", conditions.pageNumber() * pageSize);
         return template.query(builder.toString(),source, SingleColumnRowMapper.newInstance(Long.class));
     }
 

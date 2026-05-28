@@ -10,10 +10,14 @@ public record IssueSearchCondition(
         , List<Long> labelIds
         , Long milestoneId
         , Long authorId
+        , Integer pageNumber
 ) {
     public IssueSearchCondition {
         if (status == null) {
             status = IssueStatus.OPEN;
+        }
+        if (pageNumber == null || pageNumber < 0) {
+            pageNumber = 0;
         }
     }
 }

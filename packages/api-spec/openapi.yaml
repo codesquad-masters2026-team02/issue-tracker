@@ -1225,6 +1225,9 @@ components:
         authorId:
           type: integer
           format: int64
+        pageNumber:
+          type: integer
+          format: int32
     ApiResponseIssueSearchResponse:
       type: object
       properties:
@@ -1243,6 +1246,22 @@ components:
         closedIssueCount:
           type: integer
           format: int64
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalIssueCount:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+        first:
+          type: boolean
+        last:
+          type: boolean
         issues:
           type: array
           items:

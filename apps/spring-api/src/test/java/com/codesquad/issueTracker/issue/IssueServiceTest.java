@@ -123,7 +123,7 @@ class IssueServiceTest {
         );
         issueService.updateStatus(closed.issueNumber(), new UpdateIssueStatusRequest(IssueStatus.CLOSED));
 
-        IssueSearchResponse response = issueService.getIssues(new IssueSearchCondition(IssueStatus.OPEN, null,null,null,null));
+        IssueSearchResponse response = issueService.getIssues(new IssueSearchCondition(IssueStatus.OPEN, null,null,null,null,0));
 
         assertThat(response.openIssueCount()).isEqualTo(2);
         assertThat(response.closedIssueCount()).isEqualTo(1);
@@ -147,7 +147,7 @@ class IssueServiceTest {
 
         issueService.bulkUpdateStatus(new BulkIssueRequest(List.of(first.issueNumber(), second.issueNumber()), IssueStatus.CLOSED));
 
-        assertThat(issueService.getIssues(new IssueSearchCondition(IssueStatus.CLOSED, null, null, null,null)).issues())
+        assertThat(issueService.getIssues(new IssueSearchCondition(IssueStatus.CLOSED, null, null, null,null,0)).issues())
                 .extracting("issueNumber")
                 .contains(first.issueNumber(), second.issueNumber());
     }

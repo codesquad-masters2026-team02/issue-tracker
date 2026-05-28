@@ -108,6 +108,12 @@ export interface IssueDetailResponse {
 export interface IssueSearchResponse {
   openIssueCount: number;
   closedIssueCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalIssueCount: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
   issues: IssueSummaryResponse[];
 }
 
@@ -117,6 +123,7 @@ export interface IssueListFilters {
   labelIds?: number[];
   milestoneId?: number;
   authorId?: number;
+  pageNumber?: number;
 }
 
 export interface IssueRequest {
@@ -370,6 +377,7 @@ function normalizeIssueFilters(filters: IssueListFilters = {}): Required<IssueLi
     labelIds: filters.labelIds ?? [],
     milestoneId: filters.milestoneId ?? 0,
     authorId: filters.authorId ?? 0,
+    pageNumber: filters.pageNumber ?? 0,
   };
 }
 
@@ -382,6 +390,7 @@ function toIssueFilterParams(filters: IssueListFilters = {}) {
   normalized.labelIds.forEach((id) => params.append('labelIds', String(id)));
   if (normalized.milestoneId > 0) params.set('milestoneId', String(normalized.milestoneId));
   if (normalized.authorId > 0) params.set('authorId', String(normalized.authorId));
+  if (normalized.pageNumber > 0) params.set('pageNumber', String(normalized.pageNumber));
 
   return params;
 }
