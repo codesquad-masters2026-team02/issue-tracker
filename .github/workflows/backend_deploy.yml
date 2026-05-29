@@ -68,6 +68,11 @@ jobs:
                 relabel_configs:
                   - target_label: application
                     replacement: spring-app
+
+              - job_name: mysql
+                static_configs:
+                  - targets:
+                      - ${{ secrets.MYSQL_EXPORTER_TARGET }}
             EOF
 
             # --- Spring API ---

@@ -10,7 +10,6 @@ public record LabelListResponse(
         List<LabelDetailResponse> list = labels.stream()
                 .map(LabelDetailResponse::from)
                 .toList();
-
         return new LabelListResponse(list);
     }
 }
