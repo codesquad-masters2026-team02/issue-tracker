@@ -134,6 +134,46 @@ class IssueServiceTest {
     }
 
     @Test
+    void getsIssuesMatchingAllRequestedLabelsAndAssignees() {
+        User author = userRepository.save(user("filter-author"));
+        User alice = userRepository.save(user("filter-alice"));
+        User bob = userRepository.save(user("filter-bob"));
+        Label bug = labelRepository.save(label("filter-bug"));
+        Label backend = labelRepository.save(label("filter-backend"));
+
+        issueService.create(
+                new IssueRequest("target", "body", List.of(bug.getId(), backend.getId()), null, List.of(alice.getId()), List.of()),
+                author.getId()
+        );
+        issueService.create(
+                new IssueRequest("missing label", "body", List.of(bug.getId()), null, List.of(alice.getId()), List.of()),
+                author.getId()
+        );
+        issueService.create(
+                new IssueRequest("missing assignee", "body", List.of(bug.getId(), backend.getId()), null, List.of(bob.getId()), List.of()),
+                author.getId()
+        );
+
+        IssueSearchResponse response = issueService.getIssues(
+                new IssueSearchCondition(
+                        IssueStatus.OPEN,
+                        List.of(alice.getId()),
+                        List.of(bug.getId(), backend.getId()),
+                        null,
+                        null,
+                        0
+                )
+        );
+
+        assertThat(response.openIssueCount()).isEqualTo(1);
+        assertThat(response.closedIssueCount()).isZero();
+        assertThat(response.issues())
+                .singleElement()
+                .extracting("title")
+                .isEqualTo("target");
+    }
+
+    @Test
     void bulkStatusUpdateChangesAllRequestedIssues() {
         User author = userRepository.save(user("bulk-author"));
         IssueDetailResponse first = issueService.create(

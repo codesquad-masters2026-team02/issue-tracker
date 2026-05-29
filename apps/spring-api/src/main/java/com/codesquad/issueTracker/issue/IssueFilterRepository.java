@@ -19,17 +19,17 @@ public class IssueFilterRepository {
 
     private final NamedParameterJdbcTemplate template;
 
-    private final String idListQuery = "SELECT DISTINCT iss.id FROM issues AS iss " +
-            "WHERE iss.status = :status";
-    private final String countQuery = "SELECT COUNT(DISTINCT iss.id) FROM issues AS iss " +
-            "WHERE iss.status = :status";
+    private final String idListQuery = "SELECT iss.id FROM issues AS iss ";
+    private final String countQuery = "SELECT COUNT(DISTINCT iss.id) FROM issues AS iss ";
 
     public List<Long> filterIssueWithSearchCondition(IssueSearchCondition conditions){
         StringBuilder builder = new StringBuilder();
         builder.append(idListQuery);
         MapSqlParameterSource source = new MapSqlParameterSource();
+        addFilterJoins(conditions, builder, source);
+        builder.append(" WHERE iss.status = :status");
         source.addValue("status", conditions.status().name());
-        addConditionsValues(conditions, builder, source);
+        addIssueConditions(conditions, builder, source);
         builder.append(" ORDER BY iss.id DESC");
         builder.append(" LIMIT :pageSize");
         builder.append(" OFFSET :offset");
@@ -42,14 +42,16 @@ public class IssueFilterRepository {
         StringBuilder builder = new StringBuilder();
         builder.append(countQuery);
         MapSqlParameterSource source = new MapSqlParameterSource();
+        addFilterJoins(conditions, builder, source);
+        builder.append(" WHERE iss.status = :status");
         source.addValue("status", status.name());
-        addConditionsValues(conditions, builder, source);
+        addIssueConditions(conditions, builder, source);
         Long count = template.queryForObject(builder.toString(),source, Long.class);
         return count != null ? count : 0L;
     }
 
 
-    private void addConditionsValues(IssueSearchCondition conditions ,StringBuilder builder, MapSqlParameterSource source){
+    private void addIssueConditions(IssueSearchCondition conditions, StringBuilder builder, MapSqlParameterSource source){
         if(conditions.milestoneId() != null){
             builder.append(" AND iss.milestone_id = :milestoneId");
             source.addValue("milestoneId", conditions.milestoneId());
@@ -58,17 +60,40 @@ public class IssueFilterRepository {
             builder.append(" AND iss.author_id = :authorId");
             source.addValue("authorId", conditions.authorId());
         }
+    }
+
+    private void addFilterJoins(IssueSearchCondition conditions, StringBuilder builder, MapSqlParameterSource source) {
         if(conditions.assigneeIds() != null && !conditions.assigneeIds().isEmpty()){
             List<Long> assigneeIds = conditions.assigneeIds().stream().distinct().toList();
-            builder.append(" AND iss.id IN (SELECT iu.issue_id FROM issue_users as iu WHERE iu.user_id IN (:assigneeIds)");
+            /*
+             * Previous form:
+             * AND iss.id IN (
+             *   SELECT iu.issue_id FROM issue_users AS iu
+             *   WHERE iu.user_id IN (:assigneeIds)
+             *   GROUP BY iu.issue_id
+             *   HAVING COUNT(DISTINCT iu.user_id) = :assigneeCount
+             * )
+             */
+            builder.append(" JOIN (SELECT iu.issue_id FROM issue_users AS iu WHERE iu.user_id IN (:assigneeIds)");
             builder.append(" GROUP BY iu.issue_id HAVING COUNT(DISTINCT iu.user_id) = :assigneeCount)");
+            builder.append(" AS assignee_filter ON assignee_filter.issue_id = iss.id");
             source.addValue("assigneeIds",assigneeIds);
             source.addValue("assigneeCount", assigneeIds.size());
         }
         if(conditions.labelIds() != null && !conditions.labelIds().isEmpty()){
             List<Long> labelIds = conditions.labelIds().stream().distinct().toList();
-            builder.append(" AND iss.id IN (SELECT il.issue_id FROM issue_labels AS il WHERE il.label_id IN (:labelIds)");
+            /*
+             * Previous form:
+             * AND iss.id IN (
+             *   SELECT il.issue_id FROM issue_labels AS il
+             *   WHERE il.label_id IN (:labelIds)
+             *   GROUP BY il.issue_id
+             *   HAVING COUNT(DISTINCT il.label_id) = :labelCount
+             * )
+             */
+            builder.append(" JOIN (SELECT il.issue_id FROM issue_labels AS il WHERE il.label_id IN (:labelIds)");
             builder.append(" GROUP BY il.issue_id HAVING COUNT(DISTINCT il.label_id) = :labelCount)");
+            builder.append(" AS label_filter ON label_filter.issue_id = iss.id");
             source.addValue("labelIds",labelIds);
             source.addValue("labelCount", labelIds.size());
         }
