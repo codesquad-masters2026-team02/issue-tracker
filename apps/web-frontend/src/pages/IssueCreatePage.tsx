@@ -13,7 +13,7 @@ import { icon } from '../lib/icons';
 import './IssueCreatePage.css';
 
 function sortLabels(labels: LabelResponse[]) {
-  return [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  return [...labels].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'));
 }
 
 type SidebarMenu = 'assignees' | 'labels' | 'milestone' | null;
@@ -47,10 +47,10 @@ export function IssueCreatePage() {
   const sidebarRef = useRef<HTMLElement>(null);
 
   const canSubmit = title.trim().length > 0 && !isPending;
-  const sortedUsers = [...users].sort((a, b) => a.username.localeCompare(b.username, 'ko'));
+  const sortedUsers = [...users].sort((a, b) => (a.username ?? '').localeCompare(b.username ?? '', 'ko'));
   const sortedLabels = sortLabels(labels);
   const sortedMilestones = [...(milestoneList?.milestones ?? [])]
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'));
   const selectedAssignees = sortedUsers.filter((user) => selectedAssigneeIds.includes(user.id));
   const selectedLabels = sortedLabels.filter((label) => selectedLabelIds.includes(label.labelId));
   const selectedMilestone = sortedMilestones.find((milestone) => milestone.id === selectedMilestoneId);

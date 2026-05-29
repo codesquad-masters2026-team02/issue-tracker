@@ -183,7 +183,7 @@ export function LabelPage() {
   const [editingLabelId, setEditingLabelId] = useState<number | null>(null);
 
   const sortedLabels = useMemo(
-    () => [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...labels].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [labels],
   );
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;

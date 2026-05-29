@@ -243,7 +243,7 @@ export function MilestonePage() {
   const openMilestoneCount = data?.openMilestoneCount ?? 0;
   const closedMilestoneCount = data?.closedMilestoneCount ?? 0;
   const sortedMilestones = useMemo(
-    () => [...milestones].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...milestones].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [milestones],
   );
   const mutationError = createMilestone.error

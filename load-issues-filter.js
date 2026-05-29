@@ -3,11 +3,17 @@ import http from 'k6/http';
 
   const BASE_URL = 'https://d2fr8s1xlew5bs.cloudfront.net';
 
+  const USERNAME = 'loadtester';
+  const PASSWORD = '!Test1234';
+
+  const ASSIGNEE_ID = 427;
+  const LABEL_IDS = [1, 2];
+
   export const options = {
     stages: [
-      { duration: '5s', target: 100 },
-      { duration: '30s', target: 100 },
-      { duration: '5s', target: 0 },
+      { duration: '30s', target: 10 },
+      { duration: '1m', target: 50 },
+      { duration: '30s', target: 0 },
     ],
     thresholds: {
       http_req_failed: ['rate<0.01'],
@@ -19,8 +25,8 @@ import http from 'k6/http';
     const loginRes = http.post(
       `${BASE_URL}/api/users/signin`,
       JSON.stringify({
-        username: 'loadtester',
-        password: '!Test1234',
+        username: USERNAME,
+        password: PASSWORD,
       }),
       {
         headers: { 'Content-Type': 'application/json' },
@@ -31,11 +37,10 @@ import http from 'k6/http';
       'login success': (res) => res.status === 200,
     });
 
-    const body = loginRes.json();
-    const token = body?.data?.accessToken;
+    const token = loginRes.json('data.accessToken');
 
     if (!token) {
-      throw new Error(`No access token returned: ${loginRes.body}`);
+      throw new Error(`No access token returned: ${loginRes.status} ${loginRes.body}`);
     }
 
     return { token };
@@ -46,17 +51,19 @@ import http from 'k6/http';
       Authorization: `Bearer ${data.token}`,
     };
 
-    const page = Math.floor(Math.random() * 20);
-    const status = Math.random() > 0.2 ? 'OPEN' : 'CLOSED';
+    const status = 'OPEN';
+    const page = 0;
+
+    const labelQuery = LABEL_IDS.map((id) => `labelIds=${id}`).join('&');
 
     const res = http.get(
-      `${BASE_URL}/api/issues?status=${status}&pageNumber=${page}`,
+      `${BASE_URL}/api/issues?status=${status}&assigneeIds=${ASSIGNEE_ID}&${labelQuery}&pageNumber=${page}`,
       { headers },
     );
 
     check(res, {
-      'issue list 200': (r) => r.status === 200,
-      'issue list success true': (r) => r.json('success') === true,
+      'filtered issue list 200': (r) => r.status === 200,
+      'filtered issue list success true': (r) => r.json('success') === true,
     });
 
     sleep(1);

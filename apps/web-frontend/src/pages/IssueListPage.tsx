@@ -160,11 +160,11 @@ export function IssueListPage() {
     || Boolean(authorId);
 
   const sortedUsers = useMemo(
-    () => [...users].sort((a, b) => a.username.localeCompare(b.username, 'ko')),
+    () => [...users].sort((a, b) => (a.username ?? '').localeCompare(b.username ?? '', 'ko')),
     [users],
   );
   const sortedLabels = useMemo(
-    () => [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...labels].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [labels],
   );
   const sortedMilestones = useMemo(() => {
@@ -172,7 +172,7 @@ export function IssueListPage() {
       [...(milestoneList?.milestones ?? []), ...(closedMilestoneList?.milestones ?? [])]
         .map((milestone) => [milestone.id, milestone]),
     );
-    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    return [...byId.values()].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'));
   }, [closedMilestoneList, milestoneList]);
   const userById = useMemo(
     () => new Map(users.map((user) => [user.id, user])),
@@ -180,7 +180,7 @@ export function IssueListPage() {
   );
   const userIdByQueryValue = useMemo(() => {
     const entries = users.flatMap((user) => [
-      [user.username.toLowerCase(), user.id] as const,
+      ...(user.username ? [[user.username.toLowerCase(), user.id] as const] : []),
       [String(user.id), user.id] as const,
     ]);
     return new Map(entries);
@@ -191,7 +191,7 @@ export function IssueListPage() {
   );
   const labelIdByQueryValue = useMemo(() => {
     const entries = labels.flatMap((label) => [
-      [label.name.toLowerCase(), label.labelId] as const,
+      ...(label.name ? [[label.name.toLowerCase(), label.labelId] as const] : []),
       [String(label.labelId), label.labelId] as const,
     ]);
     return new Map(entries);
@@ -202,7 +202,7 @@ export function IssueListPage() {
   );
   const milestoneIdByQueryValue = useMemo(() => {
     const entries = sortedMilestones.flatMap((milestone) => [
-      [milestone.name.toLowerCase(), milestone.id] as const,
+      ...(milestone.name ? [[milestone.name.toLowerCase(), milestone.id] as const] : []),
       [String(milestone.id), milestone.id] as const,
     ]);
     return new Map(entries);
