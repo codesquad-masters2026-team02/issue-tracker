@@ -10,6 +10,7 @@ import {
   type IssueStatus,
 } from '../lib/api';
 import { icon } from '../lib/icons';
+import { useAuth } from '../lib/auth';
 import { LabelBadge } from '../components/LabelBadge';
 import './IssueListPage.css';
 
@@ -149,8 +150,11 @@ export function IssueListPage() {
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<number>>(() => new Set());
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [openFilterMenu, setOpenFilterMenu] = useState<FilterMenu>(null);
+  const [isIssueFilterOpen, setIsIssueFilterOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+  const issueFilterRef = useRef<HTMLDivElement>(null);
+  const { user: currentUser } = useAuth();
   const milestoneCount = milestoneList?.milestoneCount ?? milestoneList?.milestones.length ?? 0;
   const selectedAssigneeIds = useMemo(() => new Set(assigneeIds), [assigneeIds]);
   const selectedLabelIds = useMemo(() => new Set(labelIds), [labelIds]);
@@ -291,6 +295,24 @@ export function IssueListPage() {
     document.addEventListener('mousedown', closeOnOutsideClick);
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, [openFilterMenu]);
+
+  useEffect(() => {
+    if (!isIssueFilterOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Node
+        && issueFilterRef.current
+        && !issueFilterRef.current.contains(target)
+      ) {
+        setIsIssueFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [isIssueFilterOpen]);
 
   useEffect(() => {
     setSearchInputText([conditionQueryText, titleSearch].filter(Boolean).join(' '));
@@ -477,16 +499,99 @@ export function IssueListPage() {
     );
   };
 
+  type IssueFilterPreset = 'open' | 'authored' | 'assigned' | 'closed';
+
+  const activeIssueFilterPreset = useMemo<IssueFilterPreset | null>(() => {
+    const noAssignee = assigneeIds.length === 0;
+    const noLabel = labelIds.length === 0;
+    const noMilestone = !milestoneId;
+
+    if (tab === 'OPEN' && noAssignee && noLabel && noMilestone && !authorId) return 'open';
+    if (tab === 'CLOSED' && noAssignee && noLabel && noMilestone && !authorId) return 'closed';
+    if (currentUser) {
+      if (tab === 'OPEN' && authorId === currentUser.id && noAssignee && noLabel && noMilestone) return 'authored';
+      if (tab === 'OPEN' && assigneeIds.length === 1 && assigneeIds[0] === currentUser.id && noLabel && noMilestone && !authorId) return 'assigned';
+    }
+    return null;
+  }, [tab, assigneeIds, labelIds, milestoneId, authorId, currentUser]);
+
+  const handleIssueFilterPreset = (preset: IssueFilterPreset) => {
+    const next = new URLSearchParams();
+
+    switch (preset) {
+      case 'open':
+        break;
+      case 'closed':
+        next.set('status', 'CLOSED');
+        break;
+      case 'authored':
+        if (currentUser) next.set('authorId', String(currentUser.id));
+        break;
+      case 'assigned':
+        if (currentUser) next.append('assigneeIds', String(currentUser.id));
+        break;
+
+    }
+
+    setSearchParams(next);
+    setTitleSearch('');
+    setSelectedIssueIds(new Set());
+    setIsIssueFilterOpen(false);
+  };
+
   return (
     <div className="issue-list">
       {/* 상단 바 */}
       <div className="issue-list__topbar">
         {/* 필터 + 검색이 하나의 pill */}
-        <div className="search-pill">
-          <button type="button" className="search-pill__filter">
+        <div className="search-pill" ref={issueFilterRef}>
+          <button
+            type="button"
+            className="search-pill__filter"
+            aria-expanded={isIssueFilterOpen}
+            onClick={() => setIsIssueFilterOpen((open) => !open)}
+          >
             <span>필터</span>
             <img src={icon('chevronDown')} alt="" width={16} height={16} />
           </button>
+          {isIssueFilterOpen && (
+            <div className="issue-filter-panel" role="menu" aria-label="이슈 필터">
+              <div className="issue-filter-panel__head">이슈 필터</div>
+              <button
+                type="button"
+                className={`issue-filter-panel__item ${activeIssueFilterPreset === 'open' ? 'is-active' : ''}`}
+                onClick={() => handleIssueFilterPreset('open')}
+              >
+                <span>열린 이슈</span>
+                <img src={icon(activeIssueFilterPreset === 'open' ? 'checkOnCircle' : 'checkOffCircle')} alt="" width={20} height={20} />
+              </button>
+              <button
+                type="button"
+                className={`issue-filter-panel__item ${activeIssueFilterPreset === 'authored' ? 'is-active' : ''}`}
+                onClick={() => handleIssueFilterPreset('authored')}
+              >
+                <span>내가 작성한 이슈</span>
+                <img src={icon(activeIssueFilterPreset === 'authored' ? 'checkOnCircle' : 'checkOffCircle')} alt="" width={20} height={20} />
+              </button>
+              <button
+                type="button"
+                className={`issue-filter-panel__item ${activeIssueFilterPreset === 'assigned' ? 'is-active' : ''}`}
+                onClick={() => handleIssueFilterPreset('assigned')}
+              >
+                <span>나에게 할당된 이슈</span>
+                <img src={icon(activeIssueFilterPreset === 'assigned' ? 'checkOnCircle' : 'checkOffCircle')} alt="" width={20} height={20} />
+              </button>
+
+              <button
+                type="button"
+                className={`issue-filter-panel__item ${activeIssueFilterPreset === 'closed' ? 'is-active' : ''}`}
+                onClick={() => handleIssueFilterPreset('closed')}
+              >
+                <span>닫힌 이슈</span>
+                <img src={icon(activeIssueFilterPreset === 'closed' ? 'checkOnCircle' : 'checkOffCircle')} alt="" width={20} height={20} />
+              </button>
+            </div>
+          )}
           <div className="search-pill__divider" />
           <div className="search-pill__input">
             <img src={icon('search')} alt="" width={16} height={16} />
