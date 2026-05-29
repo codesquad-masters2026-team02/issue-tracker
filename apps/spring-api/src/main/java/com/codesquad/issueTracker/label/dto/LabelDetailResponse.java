@@ -14,5 +14,4 @@ public record LabelDetailResponse(
         return new LabelDetailResponse(label.getId(), label.getName(), label.getDescription(),
                 label.getBackgroundColor(), label.getTextColor());
     }
-
 }

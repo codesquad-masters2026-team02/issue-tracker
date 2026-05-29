@@ -6,6 +6,7 @@ on:
     branches: [ "develop" ]
     paths:
       - 'apps/spring-api/**' # Only run if backend code changes!
+      - '.github/workflows/backend_deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -37,15 +38,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
-      - name: Build and Push Prometheus Image
-        uses: docker/build-push-action@v6
-        with:
-          context: apps/spring-api
-          file: apps/spring-api/Dockerfile.prometheus
-          platforms: linux/arm64
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
-
       # 5. DEPLOY TO REMOTE SERVER
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -56,13 +48,34 @@ jobs:
           script: |
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
-            docker pull grafana/grafana
+            docker pull prom/prometheus:latest
+            docker pull grafana/grafana:latest
+
+            docker network create issue-tracker-net || true
+            docker volume create grafana-data || true
+            sudo mkdir -p /opt/issue-tracker
+
+            sudo tee /opt/issue-tracker/prometheus.yml > /dev/null <<'EOF'
+            global:
+              scrape_interval: 15s
+
+            scrape_configs:
+              - job_name: spring-app
+                metrics_path: /actuator/prometheus
+                static_configs:
+                  - targets:
+                      - api:8080
+                relabel_configs:
+                  - target_label: application
+                    replacement: spring-app
+            EOF
 
             # --- Spring API ---
             docker stop api || true
             docker rm api || true
-            docker run -d --name api -p 127.0.0.1:8080:8080 \
+            docker run -d --name api \
+              --network issue-tracker-net \
+              -p 127.0.0.1:8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_HOST=${{ secrets.DB_HOST }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
@@ -73,26 +86,43 @@ jobs:
               -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e GITHUB_CLIENT_ID=${{ secrets.OAUTH_GITHUB_CLIENT_ID }} \
               -e GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }} \
+              --restart unless-stopped \
               ${{ secrets.DOCKER_USERNAME }}/isssue_tracker:latest
 
             # --- Prometheus ---
             docker stop prometheus || true
             docker rm prometheus || true
             docker run -d --name prometheus \
-              --add-host=host.docker.internal:host-gateway \
+              --network issue-tracker-net \
               -p 127.0.0.1:9090:9090 \
+              -v /opt/issue-tracker/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
               --restart unless-stopped \
-              ${{ secrets.DOCKER_USERNAME }}/isssue_tracker_prometheus:latest
+              prom/prometheus:latest \
+              --config.file=/etc/prometheus/prometheus.yml
 
             # --- Grafana ---
-            if ! docker ps --format '{{"{{"}}.Names{{"}}"}}' | grep -q '^grafana$'; then
-              docker stop grafana || true
-              docker rm grafana || true
-              docker run -d --name grafana \
-                -p 127.0.0.1:3000:3000 \
-                -e GF_SERVER_DOMAIN=${{ secrets.SERVER_IP }} \
-                -e 'GF_SERVER_ROOT_URL=http://%(domain)s/grafana/' \
-                -e GF_SERVER_SERVE_FROM_SUB_PATH=true \
-                --restart unless-stopped \
-                grafana/grafana
-            fi
+            docker stop grafana || true
+            docker rm grafana || true
+            docker run -d --name grafana \
+              --network issue-tracker-net \
+              -p 127.0.0.1:3000:3000 \
+              -v grafana-data:/var/lib/grafana \
+              -e GF_SERVER_ROOT_URL=http://${{ secrets.SERVER_IP }}/grafana/ \
+              -e GF_SERVER_SERVE_FROM_SUB_PATH=true \
+              --restart unless-stopped \
+              grafana/grafana:latest
+
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              if docker exec prometheus wget -qO- http://api:8080/actuator/prometheus > /tmp/prometheus-check.txt; then
+                head -5 /tmp/prometheus-check.txt
+                rm -f /tmp/prometheus-check.txt
+                break
+              fi
+
+              if [ "$i" = "15" ]; then
+                echo "Prometheus could not reach Spring actuator metrics"
+                exit 1
+              fi
+
+              sleep 2
+            done
