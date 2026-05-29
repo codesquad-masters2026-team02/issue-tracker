@@ -164,11 +164,11 @@ export function IssueListPage() {
     || Boolean(authorId);
 
   const sortedUsers = useMemo(
-    () => [...users].sort((a, b) => a.username.localeCompare(b.username, 'ko')),
+    () => [...users].sort((a, b) => (a.username ?? '').localeCompare(b.username ?? '', 'ko')),
     [users],
   );
   const sortedLabels = useMemo(
-    () => [...labels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...labels].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [labels],
   );
   const sortedMilestones = useMemo(() => {
@@ -176,7 +176,7 @@ export function IssueListPage() {
       [...(milestoneList?.milestones ?? []), ...(closedMilestoneList?.milestones ?? [])]
         .map((milestone) => [milestone.id, milestone]),
     );
-    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    return [...byId.values()].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko'));
   }, [closedMilestoneList, milestoneList]);
   const userById = useMemo(
     () => new Map(users.map((user) => [user.id, user])),

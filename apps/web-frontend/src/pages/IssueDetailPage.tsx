@@ -225,15 +225,15 @@ export function IssueDetailPage() {
 
   const canSubmitComment = newComment.trim().length > 0 && !isCommentPending;
   const sortedUsers = useMemo(
-    () => [...allUsers].sort((a, b) => a.username.localeCompare(b.username, 'ko')),
+    () => [...allUsers].sort((a, b) => (a.username ?? '').localeCompare(b.username ?? '', 'ko')),
     [allUsers],
   );
   const sortedAllLabels = useMemo(
-    () => [...allLabels].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...allLabels].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [allLabels],
   );
   const sortedMilestones = useMemo(
-    () => [...(milestoneList?.milestones ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'ko')),
+    () => [...(milestoneList?.milestones ?? [])].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ko')),
     [milestoneList],
   );
 
